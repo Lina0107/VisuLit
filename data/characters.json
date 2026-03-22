@@ -1,0 +1,2094 @@
+[
+  {
+    "character_id": "gutenberg-345-canon-a6afe3b6b8",
+    "book_id": "gutenberg-345",
+    "character_name": "Jonathan Harker",
+    "aliases": [
+      "Jonathan Harker",
+      "Jonathan"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "Jonathan Harker’s Journal",
+        "location": "early"
+      },
+      {
+        "quote": "Jonathan and I stood hand in hand, and we felt that our best and dearest friend was gone from us....",
+        "location": "middle"
+      },
+      {
+        "quote": "Jonathan was holding me by the arm, the way he used to in old days before I went to school.",
+        "location": "middle"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "His face was not a good face; it was hard, and cruel, and sensual, and his big white teeth, that looked all the whiter because his lips were so red, were pointed like an animal’s. Jonathan kept staring at him, till I…",
+        "location": "middle"
+      },
+      {
+        "quote": "I knew the swaying round forms, the bright hard eyes, the white teeth, the ruddy colour, the voluptuous lips. They smiled ever at poor dear Madam Mina; and as their laugh came through the silence of the night, they…",
+        "location": "late"
+      },
+      {
+        "quote": "The dark man kept his eyes fixed on her, and when the carriage moved up Piccadilly he followed in the same direction, and hailed a hansom. Jonathan kept looking after him, and said, as if to himself:-- “I believe it is…",
+        "location": "middle"
+      },
+      {
+        "quote": "I put back the clothes from my face, and found, to my surprise, that all was dim around. The gaslight which I had left lit for Jonathan, but turned down, came only like a tiny red spark through the fog, which had…",
+        "location": "late"
+      },
+      {
+        "quote": "The moonlight was so bright that through the thick yellow blind the room was light enough to see. On the bed beside the window lay Jonathan Harker, his face flushed and breathing heavily as though in a stupor. Kneeling…",
+        "location": "late"
+      },
+      {
+        "quote": "Mary’s Church at Whitby. I knew, too, the red scar on his forehead where Jonathan had struck him. For an instant my heart stood still, and I would have screamed out, only that I was paralysed.",
+        "location": "late"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:29:40.923302+00:00"
+  },
+  {
+    "character_id": "gutenberg-345-canon-f8e51acb1b",
+    "book_id": "gutenberg-345",
+    "character_name": "Mina Harker",
+    "aliases": [
+      "Mina Harker",
+      "Mina Murray",
+      "Mina"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "Mina Murray’s Journal",
+        "location": "early"
+      },
+      {
+        "quote": "Mina Harker’s Journal",
+        "location": "middle"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "I felt in my heart a wicked, burning desire that they would kiss me with those red lips. It is not good to note this down, lest some day it should meet Mina’s eyes and cause her pain; but it is the truth. They whispered…",
+        "location": "early"
+      },
+      {
+        "quote": "I knew the swaying round forms, the bright hard eyes, the white teeth, the ruddy colour, the voluptuous lips. They smiled ever at poor dear Madam Mina; and as their laugh came through the silence of the night, they…",
+        "location": "late"
+      },
+      {
+        "quote": "If it may be that with all the others we can be so successful, then the sunset of this evening may shine on Madam Mina’s forehead all white as ivory and with no stain!” As we passed across the lawn on our way to the…",
+        "location": "late"
+      },
+      {
+        "quote": "I am tired to-night, and want sleep. Mina is fast asleep, and looks a little too pale; her eyes look as though she had been crying. Poor dear, I’ve no doubt it frets her to be kept in the dark, and it may make her…",
+        "location": "late"
+      },
+      {
+        "quote": "One of us will be here all night. We don’t mean to take any chances!” His look and gesture forbade discussion, so I came back and told Mina. She sighed and positively a shadow of a smile stole over her poor, pale face…",
+        "location": "late"
+      },
+      {
+        "quote": "She sighed and positively a shadow of a smile stole over her poor, pale face as she put her arms round me and said softly:-- “Oh, thank God for good brave men!” With a sigh she sank back again to sleep. I write this now…",
+        "location": "late"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:29:40.923302+00:00"
+  },
+  {
+    "character_id": "gutenberg-345-canon-afa2d825c6",
+    "book_id": "gutenberg-345",
+    "character_name": "Count Dracula",
+    "aliases": [
+      "The Count",
+      "Count Dracula",
+      "Castle Dracula",
+      "Dracula",
+      "Count"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "Count Dracula had directed me to go to the Golden Krone Hotel",
+        "location": "early"
+      },
+      {
+        "quote": "I am Dracula; and I bid you welcome, Mr. Harker, to my house.",
+        "location": "early"
+      },
+      {
+        "quote": "I believe it is the Count, but he has grown young. My God, if this be so!",
+        "location": "middle"
+      },
+      {
+        "quote": "It is the man himself!",
+        "location": "middle"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "Her face was ghastly, with a pallor which was accentuated by the blood which smeared her lips and cheeks and chin; from her throat trickled a thin stream of blood; her eyes were mad with terror. Then she put before her…",
+        "location": "late"
+      },
+      {
+        "quote": "By her side stood a tall, thin man, clad in black. His face was turned from us, but the instant we saw we all recognised the Count--in every way, even to the scar on his forehead. With his left hand he held both Mrs.",
+        "location": "late"
+      },
+      {
+        "quote": "As my eyes opened involuntarily I saw his strong hand grasp the slender neck of the fair woman and with giant’s power draw it back, the blue eyes transformed with fury, the white teeth champing with rage, and the fair…",
+        "location": "early"
+      },
+      {
+        "quote": "They came close to me, and looked at me for some time, and then whispered together. Two were dark, and had high aquiline noses, like the Count, and great dark, piercing eyes that seemed to be almost red when contrasted…",
+        "location": "early"
+      },
+      {
+        "quote": "I looked down once, so as to make sure that a sudden glimpse of the awful depth would not overcome me, but after that kept my eyes away from it. I knew pretty well the direction and distance of the Count’s window, and…",
+        "location": "early"
+      },
+      {
+        "quote": "In silence we returned to the library, and after a minute or two I went to my own room. The last I saw of Count Dracula was his kissing his hand to me; with a red light of triumph in his eyes, and with a smile that…",
+        "location": "early"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:29:40.923302+00:00"
+  },
+  {
+    "character_id": "gutenberg-345-canon-2d6c637444",
+    "book_id": "gutenberg-345",
+    "character_name": "Lucy Westenra",
+    "aliases": [
+      "Lucy Westenra",
+      "Miss Lucy",
+      "Lucy"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "CHAPTER XI. Lucy Westenra’s Diary",
+        "location": "early"
+      },
+      {
+        "quote": "Miss Lucy is dead; is it not so? Yes! Then there can be no wrong to her.",
+        "location": "middle"
+      },
+      {
+        "quote": "Lucy lies in the tomb of her kin, a lordly death-house in a lonely churchyard",
+        "location": "middle"
+      },
+      {
+        "quote": "Lucy Westenra, but yet how changed. The sweetness was turned to adamantine, heartless cruelty",
+        "location": "middle"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "I called in fright, “Lucy! Lucy!” and something raised a head, and from where I was I could see a white face and red, gleaming eyes. Lucy did not answer, and I ran on to the entrance of the churchyard.",
+        "location": "early"
+      },
+      {
+        "quote": "There was undoubtedly something, long and black, bending over the half-reclining white figure. I called in fright, “Lucy! Lucy!” and something raised a head, and from where I was I could see a white face and red,…",
+        "location": "early"
+      },
+      {
+        "quote": "Lucy!” and something raised a head, and from where I was I could see a white face and red, gleaming eyes. Lucy did not answer, and I ran on to the entrance of the churchyard. As I entered, the church was between me and…",
+        "location": "early"
+      },
+      {
+        "quote": "I felt my knees begin to tremble. There on the bed, seemingly in a swoon, lay poor Lucy, more horribly white and wan-looking than ever. Even the lips were white, and the gums seemed to have shrunken back from the teeth,…",
+        "location": "middle"
+      },
+      {
+        "quote": "The latter lay farthest in, and she was covered with a white sheet, the edge of which had been blown back by the draught through the broken window, showing the drawn, white face, with a look of terror fixed upon it. By…",
+        "location": "middle"
+      },
+      {
+        "quote": "The end of the winding-sheet was laid over the face; when the Professor bent over and turned it gently back, we both started at the beauty before us, the tall wax candles showing a sufficient light to note it well. All…",
+        "location": "middle"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:29:40.923302+00:00"
+  },
+  {
+    "character_id": "gutenberg-345-canon-3484cbd54c",
+    "book_id": "gutenberg-345",
+    "character_name": "Dr. Seward",
+    "aliases": [
+      "Dr. Seward",
+      "Seward"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "CHAPTER XII. Dr. Seward’s Diary",
+        "location": "early"
+      },
+      {
+        "quote": "Dr. Seward’s Diary",
+        "location": "middle"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "Alas! I am unclean to His eyes, and shall be until He may deign to let me stand forth in His sight as one of those who have not incurred His wrath. _Memorandum by Abraham Van Helsing._ _4 November._--This to my old and…",
+        "location": "late"
+      },
+      {
+        "quote": "My surmise was not finished, could not be; for I caught sight in the mirror of the red mark upon my forehead; and I knew that I was still unclean. _Dr. Seward’s Diary._ _5 October._--We all rose early, and I think that…",
+        "location": "late"
+      },
+      {
+        "quote": "He threw himself on his knees, and held up his hands, wringing them in plaintive supplication, and poured forth a torrent of entreaty, with the tears rolling down his cheeks, and his whole face and form expressive of…",
+        "location": "middle"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:29:40.923302+00:00"
+  },
+  {
+    "character_id": "gutenberg-345-canon-c1eb0da673",
+    "book_id": "gutenberg-345",
+    "character_name": "Arthur Holmwood",
+    "aliases": [
+      "Mr. Holmwood",
+      "Arthur Holmwood",
+      "Arthur",
+      "Lord Godalming"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "Mr. Holmwood",
+        "location": "early"
+      },
+      {
+        "quote": "Arthur spoke out heartily, like his old self",
+        "location": "middle"
+      },
+      {
+        "quote": "Arthur and Quincey went away together to the station",
+        "location": "middle"
+      },
+      {
+        "quote": "Lord Godalming, I, too, have a duty to do, a duty to others, a duty to you, a duty to the dead; and, by God, I shall do it!",
+        "location": "middle"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "Somewhere, looking out from the shadow, I seemed to see the high lights of the Count’s evil face, the ridge of the nose, the red eyes, the red lips, the awful pallor. It was only for a moment, for, as Lord Godalming…",
+        "location": "middle"
+      },
+      {
+        "quote": "When he arrived it was nearly six o’clock, and the sun was setting full and warm, and the red light streamed in through the window and gave more colour to the pale cheeks. When he saw her, Arthur was simply choking with…",
+        "location": "middle"
+      },
+      {
+        "quote": "When it was all over, we were standing beside Arthur, who, poor fellow, was speaking of his part in the operation where his blood had been transfused to his Lucy’s veins; I could see Van Helsing’s face grow white and…",
+        "location": "middle"
+      },
+      {
+        "quote": "The body shook and quivered and twisted in wild contortions; the sharp white teeth champed together till the lips were cut, and the mouth was smeared with a crimson foam. But Arthur never faltered. He looked like a…",
+        "location": "middle"
+      },
+      {
+        "quote": "Her breathing grew stertorous, the mouth opened, and the pale gums, drawn back, made the teeth look longer and sharper than ever. In a sort of sleep-waking, vague, unconscious way she opened her eyes, which were now…",
+        "location": "middle"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:29:40.923302+00:00"
+  },
+  {
+    "character_id": "gutenberg-345-canon-e2604a42ff",
+    "book_id": "gutenberg-345",
+    "character_name": "Quincey Morris",
+    "aliases": [
+      "Mr. Morris",
+      "Morris",
+      "Quincey Morris"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "Mr. Morris",
+        "location": "early"
+      },
+      {
+        "quote": "Quincey Morris is with him, and that is much of a help, for he himself is a bubbling well of good spirits.",
+        "location": "middle"
+      },
+      {
+        "quote": "Quincey wrote me a line too, and from him I hear that Arthur is beginning to recover something of his old buoyancy",
+        "location": "middle"
+      },
+      {
+        "quote": "Quincey Morris was phlegmatic in the way of a man who accepts all things, and accepts them in the spirit of cool bravery",
+        "location": "middle"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "But this night our feet must tread in thorny paths; or later, and for ever, the feet you love must walk in paths of flame!” Arthur looked up with set white face and said:-- “Take care, sir, take care!” “Would it not be…",
+        "location": "middle"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:29:40.923302+00:00"
+  },
+  {
+    "character_id": "gutenberg-345-canon-907c2d4d10",
+    "book_id": "gutenberg-345",
+    "character_name": "van Helsing",
+    "aliases": [
+      "van Helsing"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "Van Helsing is lying down, having a rest preparatory to his journey.",
+        "location": "middle"
+      },
+      {
+        "quote": "Dr. Van Helsing must be a good man as well as a clever one if he is Arthur’s friend and Dr. Seward’s",
+        "location": "middle"
+      },
+      {
+        "quote": "Dr. Van Helsing, you may do what you will. I feel that in saying this I am doing what my dear one would have approved.",
+        "location": "middle"
+      },
+      {
+        "quote": "Van Helsing stepped out, and, obedient to his gesture, we all advanced too; the four of us ranged in a line before the door of the tomb.",
+        "location": "middle"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "Then her eyes closed, and she breathed heavily. Very shortly after she opened her eyes in all their softness, and putting out her poor, pale, thin hand, took Van Helsing’s great brown one; drawing it to her, she kissed…",
+        "location": "middle"
+      },
+      {
+        "quote": "As for Arthur, he seemed under a spell; moving his hands from his face, he opened wide his arms. She was leaping for them, when Van Helsing sprang forward and held between them his little golden crucifix. She recoiled…",
+        "location": "middle"
+      },
+      {
+        "quote": "Then she put before her face her poor crushed hands, which bore on their whiteness the red mark of the Count’s terrible grip, and from behind them came a low desolate wail which made the terrible scream seem only the…",
+        "location": "late"
+      },
+      {
+        "quote": "Even the lips were white, and the gums seemed to have shrunken back from the teeth, as we sometimes see in a corpse after a prolonged illness. Van Helsing raised his foot to stamp in anger, but the instinct of his life…",
+        "location": "middle"
+      },
+      {
+        "quote": "Her husband flung himself on his knees beside her, and putting his arms round her, hid his face in the folds of her dress. Van Helsing beckoned to us and we stole out of the room, leaving the two loving hearts alone…",
+        "location": "late"
+      },
+      {
+        "quote": "My life is hers, and I would give the last drop of blood in my body for her.” The Professor has a strongly humorous side, and I could from old knowledge detect a trace of its origin in his answer:-- “My young sir, I do…",
+        "location": "early"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:29:40.923302+00:00"
+  },
+  {
+    "character_id": "gutenberg-1260-canon-d5691f18f8",
+    "book_id": "gutenberg-1260",
+    "character_name": "Jane Eyre",
+    "aliases": [
+      "Jane Eyre",
+      "Miss Eyre",
+      "Jane",
+      "Miss Jane"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "JANE EYRE AN AUTOBIOGRAPHY",
+        "location": "early"
+      },
+      {
+        "quote": "Jane, I don’t like cavillers or questioners",
+        "location": "early"
+      },
+      {
+        "quote": "Miss Eyre, are you ill?",
+        "location": "early"
+      },
+      {
+        "quote": "I am Jane Eyre.",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "My second daughter, Augusta, went with her mama to visit the school, and on her return she exclaimed: ‘Oh, dear papa, how quiet and plain all the girls at Lowood look, with their hair combed behind their ears, and their long pinafores, and those little Holland pockets outside their frocks—they are almost like poor people’s children!’",
+        "location": "early"
+      },
+      {
+        "quote": "Are you fond of presents?” and he searched my face with eyes that I saw were dark, irate, and piercing. “I hardly know, sir; I have little experience of them: they are generally thought pleasant things.” “Generally pleasant? Don’t you like to have a present?”",
+        "location": "early"
+      },
+      {
+        "quote": "Is this my mustard-seed? This little sunny-faced girl with the dimpled cheek and rosy lips; the satin-smooth hazel hair, and the radiant hazel eyes?” (I had green eyes, reader; but you must excuse the mistake: for him they were hazel.)",
+        "location": "middle"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:30:14.546836+00:00"
+  },
+  {
+    "character_id": "gutenberg-1260-canon-d16b2dafd6",
+    "book_id": "gutenberg-1260",
+    "character_name": "Mrs. Reed",
+    "aliases": [
+      "Mrs. Reed",
+      "Aunt Reed"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "Mrs. Reed, when there was no company, dined early",
+        "location": "early"
+      },
+      {
+        "quote": "Mrs. Reed was blind and deaf on the subject",
+        "location": "early"
+      },
+      {
+        "quote": "What would Uncle Reed say to you, if he were alive?",
+        "location": "early"
+      },
+      {
+        "quote": "Mrs. Reed might be at that time some six or seven and thirty; she was a woman of robust frame",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:30:14.546836+00:00"
+  },
+  {
+    "character_id": "gutenberg-1260-canon-076471b537",
+    "book_id": "gutenberg-1260",
+    "character_name": "John Reed",
+    "aliases": [
+      "John Reed",
+      "Master Reed",
+      "Master John",
+      "John"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "John Reed was a schoolboy of fourteen years old",
+        "location": "early"
+      },
+      {
+        "quote": "Say, ‘What do you want, Master Reed?’",
+        "location": "early"
+      },
+      {
+        "quote": "John had not much affection for his mother and sisters, and an antipathy to me",
+        "location": "early"
+      },
+      {
+        "quote": "John Reed is dead, too, sir: he ruined himself and half-ruined his family, and is supposed to have committed suicide",
+        "location": "middle"
+      }
+    ],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:30:14.546836+00:00"
+  },
+  {
+    "character_id": "gutenberg-1260-canon-69b8dbc2c7",
+    "book_id": "gutenberg-1260",
+    "character_name": "Eliza Reed",
+    "aliases": [
+      "Eliza Reed",
+      "Eliza"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "my physical inferiority to Eliza, John, and Georgiana Reed",
+        "location": "early"
+      },
+      {
+        "quote": "The said Eliza, John, and Georgiana were now clustered round their mama",
+        "location": "early"
+      },
+      {
+        "quote": "Eliza was putting on her bonnet and warm garden-coat to go and feed her poultry",
+        "location": "early"
+      },
+      {
+        "quote": "This I felt sure was Eliza, though I could trace little resemblance to her former self in that elongated and colourless visage",
+        "location": "middle"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "There was something ascetic in her look, which was augmented by the extreme plainness of a straight-skirted, black, stuff dress, a starched linen collar, hair combed away from the temples, and the nun-like ornament of a string of ebony beads and a crucifix.",
+        "location": "middle"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:30:14.546836+00:00"
+  },
+  {
+    "character_id": "gutenberg-1260-canon-89ccd8574a",
+    "book_id": "gutenberg-1260",
+    "character_name": "Georgiana Reed",
+    "aliases": [
+      "Georgiana Reed",
+      "Georgiana",
+      "Miss Georgiana"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "my physical inferiority to Eliza, John, and Georgiana Reed",
+        "location": "early"
+      },
+      {
+        "quote": "The said Eliza, John, and Georgiana were now clustered round their mama",
+        "location": "early"
+      },
+      {
+        "quote": "Georgiana sat on a high stool, dressing her hair at the glass, and interweaving her curls with artificial flowers and faded feathers",
+        "location": "early"
+      },
+      {
+        "quote": "The other was as certainly Georgiana: but not the Georgiana I remembered—the slim and fairy-like girl of eleven. This was a full-blown, very plump damsel, fair as waxwork, with handsome and regular features, languishing blue eyes, and ringleted yellow hair",
+        "location": "middle"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "Her beauty, her pink cheeks and golden curls, seemed to give delight to all who looked at her, and to purchase indemnity for every fault.",
+        "location": "early"
+      },
+      {
+        "quote": "Leaven. “I dare say they’ve not kept you too well at school: Miss Reed is the head and shoulders taller than you are; and Miss Georgiana would make two of you in breadth.” “Georgiana is handsome, I suppose, Bessie?” “Very. She is really a beauty; but not at all like her mama.”",
+        "location": "early"
+      },
+      {
+        "quote": "The other was as certainly Georgiana: but not the Georgiana I remembered—the slim and fairy-like girl of eleven. This was a full-blown, very plump damsel, fair as waxwork, with handsome and regular features, languishing blue eyes, and ringleted yellow hair.",
+        "location": "middle"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:30:14.546836+00:00"
+  },
+  {
+    "character_id": "gutenberg-1260-canon-67836e0830",
+    "book_id": "gutenberg-1260",
+    "character_name": "Bessie",
+    "aliases": [
+      "Bessie"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "the chidings of Bessie, the nurse",
+        "location": "early"
+      },
+      {
+        "quote": "Bessie, as she moved hither and thither, putting away toys and arranging drawers, addressed to me every now and then a word of unwonted kindness",
+        "location": "early"
+      },
+      {
+        "quote": "Bessie Lee must, I think, have been a girl of good natural capacity, for she was smart in all she did, and had a remarkable knack of narrative",
+        "location": "early"
+      },
+      {
+        "quote": "Bessie had retained her quick temper as well as her light foot and good looks",
+        "location": "middle"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "I remember her as a slim young woman, with black hair, dark eyes, very nice features, and good, clear complexion; but she had a capricious and hasty temper, and indifferent ideas of principle or justice: still, such as she was, I preferred her to anyone else at Gateshead Hall.",
+        "location": "early"
+      },
+      {
+        "quote": "I looked: I saw a woman attired like a well-dressed servant, matronly, yet still young; very good-looking, with black hair and eyes, and lively complexion. “Well, who is it?” she asked, in a voice and with a smile I well remembered.",
+        "location": "early"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:30:14.546836+00:00"
+  },
+  {
+    "character_id": "gutenberg-1260-canon-b520e15d5e",
+    "book_id": "gutenberg-1260",
+    "character_name": "Mr. Brocklehurst",
+    "aliases": [
+      "Mr. Brocklehurst",
+      "Brocklehurst"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "Mr. Brocklehurst, I believe I intimated in the letter which I wrote to you three weeks ago",
+        "location": "early"
+      },
+      {
+        "quote": "Mr. Brocklehurst put into my hand a thin pamphlet sewn in a cover",
+        "location": "early"
+      },
+      {
+        "quote": "I shall return to Brocklehurst Hall in the course of a week or two",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "Did you say that tall gentleman is Mr. Brocklehurst?” “Yes, with the black coat and the long hair.”",
+        "location": "early"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:30:14.546836+00:00"
+  },
+  {
+    "character_id": "gutenberg-1260-canon-2ac34ea0e7",
+    "book_id": "gutenberg-1260",
+    "character_name": "Helen Burns",
+    "aliases": [
+      "Helen Burns",
+      "Burns",
+      "Helen"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "Burns (such it seems was her name: the girls here were all called by their surnames, as boys are elsewhere)",
+        "location": "early"
+      },
+      {
+        "quote": "Helen.",
+        "location": "early"
+      },
+      {
+        "quote": "I heard of Helen Burns, recalled her dying words—her faith—her doctrine of the equality of disembodied souls",
+        "location": "middle"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "I remember it now, and I know that it was the effluence of fine intellect, of true courage; it lit up her marked lineaments, her thin face, her sunken grey eye, like a reflection from the aspect of an angel. Yet at that moment Helen Burns wore on her arm the untidy badge; scarcely an hour ago I had heard her condemned by Miss Scatcherd to a dinner of bread and water on the morrow, because she had blotted an exercise in copying it out.",
+        "location": "early"
+      },
+      {
+        "quote": "I still recoiled at the dread of seeing a corpse. “Helen!” I whispered softly, “are you awake?” She stirred herself, put back the curtain, and I saw her face, pale, wasted, but quite composed: she looked so little changed, that my fear was instantly dissipated.",
+        "location": "early"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:30:14.546836+00:00"
+  },
+  {
+    "character_id": "gutenberg-37106-canon-35b5504332",
+    "book_id": "gutenberg-37106",
+    "character_name": "Meg March",
+    "aliases": [
+      "Meg March",
+      "Meg",
+      "Margaret"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "\"It's so dreadful to be poor!\" sighed Meg, looking down at her old dress.",
+        "location": "early"
+      },
+      {
+        "quote": "Margaret, the eldest of the four, was sixteen, and very pretty, being plump and fair, with large eyes, plenty of soft, brown hair, a sweet mouth, and white hands, of which she was rather vain.",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "Margaret, the eldest of the four, was sixteen, and very pretty, being plump and fair, with large eyes, plenty of soft, brown hair, a sweet mouth, and white hands, of which she was rather vain.",
+        "location": "early"
+      },
+      {
+        "quote": "\"Serves me right for trying to be fine. I wish I'd let my hair alone,\" cried Meg petulantly. \"So do I, it was so smooth and pretty.",
+        "location": "early"
+      },
+      {
+        "quote": "They looked very well in their simple suits,--Meg in silvery drab, with a blue velvet snood, lace frills, and the pearl pin; Jo in maroon, with a stiff, gentlemanly linen collar, and a white chrysanthemum or two for her…",
+        "location": "early"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:43:49.133785+00:00"
+  },
+  {
+    "character_id": "gutenberg-37106-canon-e020729c65",
+    "book_id": "gutenberg-37106",
+    "character_name": "Jo March",
+    "aliases": [
+      "Jo March",
+      "Jo",
+      "Josephine"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "\"I hate to think I've got to grow up, and be Miss March, and wear long gowns, and look as prim as a China-aster!\"",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "\"You are old enough to leave off boyish tricks, and to behave better, Josephine. It didn't matter so much when you were a little girl; but now you are so tall, and turn up your hair, you should remember that you are a young lady.\"",
+        "location": "early"
+      },
+      {
+        "quote": "They looked very well in their simple suits,--Meg in silvery drab, with a blue velvet snood, lace frills, and the pearl pin; Jo in maroon, with a stiff, gentlemanly linen collar, and a white chrysanthemum or two for her…",
+        "location": "early"
+      },
+      {
+        "quote": "\"You won't stop, I know, as long as you can trail round in a white gown with your hair down, and wear gold-paper jewelry. You are the best actress we've got, and there'll be an end of everything if you quit the boards,\"…",
+        "location": "early"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:43:49.133785+00:00"
+  },
+  {
+    "character_id": "gutenberg-37106-canon-bf617bd594",
+    "book_id": "gutenberg-37106",
+    "character_name": "Beth March",
+    "aliases": [
+      "Beth March",
+      "Beth",
+      "Elizabeth"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "\"We've got father and mother and each other,\" said Beth contentedly, from her corner.",
+        "location": "early"
+      },
+      {
+        "quote": "Elizabeth--or Beth, as every one called her--was a rosy, smooth-haired, bright-eyed girl of thirteen, with a shy manner, a timid voice, and a peaceful expression, which was seldom disturbed.",
+        "location": "early"
+      },
+      {
+        "quote": "Beth had a headache, and lay on the sofa, trying to comfort herself with the cat and three kittens;",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "\"So do I, it was so smooth and pretty. But it will soon grow out again,\" said Beth, coming to kiss and comfort the shorn sheep. After various lesser mishaps, Meg was finished at last, and by the united exertions of the family Jo's hair was got up and her…",
+        "location": "early"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:43:49.133785+00:00"
+  },
+  {
+    "character_id": "gutenberg-37106-canon-79e9ccbd67",
+    "book_id": "gutenberg-37106",
+    "character_name": "Amy March",
+    "aliases": [
+      "Amy",
+      "Amy March"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "\"I don't think it's fair for some girls to have plenty of pretty things, and other girls nothing at all,\" added little Amy, with an injured sniff.",
+        "location": "early"
+      },
+      {
+        "quote": "Amy, though the youngest, was a most important person,--in her own opinion at least.",
+        "location": "early"
+      },
+      {
+        "quote": "\"I'm glad mine is blue,\" said Amy; and then the rooms were very still while the pages were softly turned, and the winter sunshine crept in to touch the bright heads and serious faces with a Christmas greeting.",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "Now Florence's mamma hadn't a particle of taste, and Amy suffered deeply at having to wear a red instead of a blue bonnet, unbecoming gowns, and fussy aprons that did not fit. Everything was good, well made, and little…",
+        "location": "early"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:43:49.133785+00:00"
+  },
+  {
+    "character_id": "gutenberg-37106-canon-013d79ebf4",
+    "book_id": "gutenberg-37106",
+    "character_name": "Mrs. March",
+    "aliases": [
+      "Mrs. March",
+      "Marmee",
+      "Mother"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "They all drew to the fire, mother in the big chair, with Beth at her feet",
+        "location": "early"
+      },
+      {
+        "quote": "While making these maternal inquiries Mrs. March got her wet things off, her warm slippers on, and sitting down in the easy-chair, drew Amy to her lap, preparing to enjoy the happiest hour of her busy day.",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "a tall, motherly lady, with a \"can-I-help-you\" look about her which was truly delightful. She was not elegantly dressed, but a noble-looking woman, and the girls thought the gray cloak and unfashionable bonnet covered the most splendid mother in the world.",
+        "location": "early"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:43:49.133785+00:00"
+  },
+  {
+    "character_id": "gutenberg-37106-canon-f793f2a5c4",
+    "book_id": "gutenberg-37106",
+    "character_name": "Laurie",
+    "aliases": [
+      "Laurie",
+      "Laurence",
+      "The Laurence Boy"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "\"Face to face with the Laurence boy\"",
+        "location": "early"
+      },
+      {
+        "quote": "\"I'm not Mr. Laurence, I'm only Laurie.\"",
+        "location": "early"
+      },
+      {
+        "quote": "\"Curly black hair; brown skin; big, black eyes; handsome nose; fine teeth; small hands and feet; taller than I am; very polite, for a boy, and altogether jolly. Wonder how old he is?\"",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "\"Curly black hair; brown skin; big, black eyes; handsome nose; fine teeth; small hands and feet; taller than I am; very polite, for a boy, and altogether jolly. Wonder how old he is?\"",
+        "location": "early"
+      },
+      {
+        "quote": "His hair is auburn, not red; and he was very polite, and I had a delicious redowa with him.\" \"He looked like a grasshopper in a fit, when he did the new step. Laurie and I couldn't help laughing. Did you hear us?\" \"No;…",
+        "location": "early"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:43:49.133785+00:00"
+  },
+  {
+    "character_id": "gutenberg-37106-canon-c2e02b79a5",
+    "book_id": "gutenberg-37106",
+    "character_name": "Aunt March",
+    "aliases": [
+      "Aunt March",
+      "Aunt"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "\"I'm sure Aunt March is a regular Old Man of the Sea to me, but I suppose when I've learned to carry her without complaining, she will tumble off, or get so light that I sha'n't mind her.\"",
+        "location": "early"
+      },
+      {
+        "quote": "Jo happened to suit Aunt March, who was lame, and needed an active person to wait upon her.",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:43:49.133785+00:00"
+  },
+  {
+    "character_id": "gutenberg-37106-canon-432759b005",
+    "book_id": "gutenberg-37106",
+    "character_name": "Mr. Laurence",
+    "aliases": [
+      "Mr. Laurence",
+      "Laurence"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "\"Old Mr. Laurence sent it,\" replied Mrs. March.",
+        "location": "early"
+      },
+      {
+        "quote": "Mr. Laurence hooked up a big fish",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "Mr. Laurence's ruddy face changed suddenly, and he sat down, with a troubled glance at the picture of a handsome man, which hung over his table. It was Laurie's father, who _had_ run away in his youth, and married…",
+        "location": "middle"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:43:49.133785+00:00"
+  },
+  {
+    "character_id": "gutenberg-768-canon-8656b29fb1",
+    "book_id": "gutenberg-768",
+    "character_name": "Heathcliff",
+    "aliases": [
+      "Mr. Heathcliff",
+      "Heathcliff"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "Mr. Heathcliff and I are such a suitable pair to divide the desolation between us.",
+        "location": "early"
+      },
+      {
+        "quote": "‘Mr. Heathcliff?’ I said.",
+        "location": "early"
+      },
+      {
+        "quote": "Wuthering Heights is the name of Mr. Heathcliff’s dwelling.",
+        "location": "early"
+      },
+      {
+        "quote": "Heathcliff had gone to loose the beast, and shift it to his own stall;",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "He is a dark-skinned gipsy in aspect, in dress and manners a gentleman: that is, as much a gentleman as many a country squire: rather slovenly, perhaps, yet not looking amiss with his negligence, because he has an erect and handsome figure; and rather morose.",
+        "location": "early"
+      },
+      {
+        "quote": "his thick brown curls were rough and uncultivated, his whiskers encroached bearishly over his cheeks, and his hands were embrowned like those of a common labourer",
+        "location": "early"
+      },
+      {
+        "quote": "his black eyes withdraw so suspiciously under their brows",
+        "location": "early"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:44:44.252702+00:00"
+  },
+  {
+    "character_id": "gutenberg-768-canon-9ad6a91dda",
+    "book_id": "gutenberg-768",
+    "character_name": "Catherine Earnshaw",
+    "aliases": [
+      "Catherine Earnshaw",
+      "Miss Cathy",
+      "Miss Catherine",
+      "Cathy",
+      "Catherine",
+      "Miss Earnshaw"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "Catherine Earnshaw—Heathcliff—Linton, till my eyes closed",
+        "location": "early"
+      },
+      {
+        "quote": "Catherine’s library was select, and its state of dilapidation proved it to have been well used",
+        "location": "early"
+      },
+      {
+        "quote": "‘Miss Cathy’s riven th’ back off “Th’ Helmet o’ Salvation,” un’ Heathcliff’s pawsed his fit into t’ first part o’ “T’ Brooad Way to Destruction!”",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:44:44.252702+00:00"
+  },
+  {
+    "character_id": "gutenberg-768-canon-dde2178392",
+    "book_id": "gutenberg-768",
+    "character_name": "Hindley Earnshaw",
+    "aliases": [
+      "Mr. Hindley",
+      "Hindley",
+      "Hindley Earnshaw"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "Hindley is a detestable substitute—his conduct to Heathcliff is atrocious",
+        "location": "early"
+      },
+      {
+        "quote": "Hindley hurried up from his paradise on the hearth, and seizing one of us by the collar, and the other by the arm, hurled both into the back-kitchen",
+        "location": "early"
+      },
+      {
+        "quote": "Hindley named a fiddle, and then he asked Miss Cathy",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:44:44.252702+00:00"
+  },
+  {
+    "character_id": "gutenberg-768-canon-7835184ba8",
+    "book_id": "gutenberg-768",
+    "character_name": "Edgar Linton",
+    "aliases": [
+      "Mr. Linton",
+      "Edgar Linton",
+      "Mr. Edgar",
+      "Edgar"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "Mr. Linton, sir, don’t lay by your gun.",
+        "location": "early"
+      },
+      {
+        "quote": "‘Edgar Linton, after an inquisitive stare, collected sufficient wit to recognise her.’",
+        "location": "early"
+      },
+      {
+        "quote": "‘Edgar stood on the hearth weeping silently’",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "if I knocked him down twenty times, that wouldn’t make him less handsome or me more so. I wish I had light hair and a fair skin, and was dressed and behaved as well, and had a chance of being as rich as he will be!",
+        "location": "early"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:44:44.252702+00:00"
+  },
+  {
+    "character_id": "gutenberg-768-canon-123feb8358",
+    "book_id": "gutenberg-768",
+    "character_name": "Isabella Linton",
+    "aliases": [
+      "Isabella Linton",
+      "Miss Isabella",
+      "Isabella"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "Isabella—I believe she is eleven, a year younger than Cathy—lay screaming at the farther end of the room",
+        "location": "early"
+      },
+      {
+        "quote": "Isabella Linton is not to be compared with her, is she, Frances?",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "her pretty face was wan and listless; her hair uncurled: some locks hanging lankly down, and some carelessly twisted round her head.",
+        "location": "middle"
+      },
+      {
+        "quote": "a white face scratched and bruised, and a frame hardly able to support itself through fatigue",
+        "location": "middle"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:44:44.252702+00:00"
+  },
+  {
+    "character_id": "gutenberg-768-canon-75ce8035aa",
+    "book_id": "gutenberg-768",
+    "character_name": "Hareton Earnshaw",
+    "aliases": [
+      "Hareton Earnshaw",
+      "Hareton",
+      "Little Hareton"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "Hareton, drive those dozen sheep into the barn porch.",
+        "location": "early"
+      },
+      {
+        "quote": "My name is Hareton Earnshaw,” growled the other; “and I’d counsel you to respect it!",
+        "location": "early"
+      },
+      {
+        "quote": "the last of the ancient Earnshaw stock, was born.",
+        "location": "early"
+      },
+      {
+        "quote": "the child Hareton was his wife’s nephew",
+        "location": "middle"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "his thick brown curls were rough and uncultivated, his whiskers encroached bearishly over his cheeks, and his hands were embrowned like those of a common labourer",
+        "location": "early"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:44:44.252702+00:00"
+  },
+  {
+    "character_id": "gutenberg-768-canon-eb6d8cd081",
+    "book_id": "gutenberg-768",
+    "character_name": "Nelly Dean",
+    "aliases": [
+      "Nelly Dean",
+      "Mrs. Dean",
+      "Nelly",
+      "Ellen",
+      "Dean"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "I desired Mrs. Dean, when she brought in supper, to sit down while I ate it",
+        "location": "early"
+      },
+      {
+        "quote": "‘Nelly, make me decent, I’m going to be good.’",
+        "location": "early"
+      },
+      {
+        "quote": "‘Don’t cant, Nelly,’ he said: ‘nonsense!'",
+        "location": "early"
+      },
+      {
+        "quote": "‘Ellen, how long will it be before I can walk to the top of those hills?",
+        "location": "middle"
+      }
+    ],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:44:44.252702+00:00"
+  },
+  {
+    "character_id": "gutenberg-768-canon-5aa2ad6f5f",
+    "book_id": "gutenberg-768",
+    "character_name": "Joseph",
+    "aliases": [
+      "Joseph"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "Joseph was an elderly, nay, an old man, very old, perhaps, though hale and sinewy.",
+        "location": "early"
+      },
+      {
+        "quote": "‘Joseph, take Mr. Lockwood’s horse; and bring up some wine.’",
+        "location": "early"
+      },
+      {
+        "quote": "Joseph, who appeared in sufficient distress, expressed satisfaction at my presence.",
+        "location": "middle"
+      }
+    ],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-15T09:44:44.252702+00:00"
+  },
+  {
+    "character_id": "gutenberg-84-canon-2ff4724c5e",
+    "book_id": "gutenberg-84",
+    "character_name": "Victor Frankenstein",
+    "aliases": [
+      "Victor Frankenstein",
+      "Frankenstein"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "EBOOK FRANKENSTEIN; OR, THE MODERN PROMETHEUS *** Frankenstein; or, the Modern Prometheus by Mary Wollstonecraft (Godwin) Shelley CONTENTS Letter 1 Letter 2 Letter 3 Letter 4 Chapter 1 Chapter 2 Chapter 3 Chapter 4…",
+        "location": "early"
+      },
+      {
+        "quote": "I threw the letter on the table, and covered my face with my hands. “My dear Frankenstein,” exclaimed Henry, when he perceived me weep with bitterness, “are you always to be unhappy?",
+        "location": "early"
+      },
+      {
+        "quote": "You dare not keep me.’ “‘Frankenstein! you belong then to my enemy—to him towards whom I have sworn eternal revenge; you shall be my first victim.’ “The child still struggled and loaded me with epithets which carried…",
+        "location": "middle"
+      },
+      {
+        "quote": "Frankenstein, who was dozing, awoke and asked the cause of the tumult. “They shout,” I said, “because they will soon return to England.” “Do you, then, really return?” “Alas!",
+        "location": "late"
+      }
+    ],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:15:00.638870+00:00"
+  },
+  {
+    "character_id": "gutenberg-84-canon-bdd3659711",
+    "book_id": "gutenberg-84",
+    "character_name": "Elizabeth Lavenza",
+    "aliases": [
+      "Elizabeth Lavenza"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "They consulted their village priest, and the result was that Elizabeth Lavenza became the inmate of my parents’ house—my more than sister—the beautiful and adored companion of all my occupations and my pleasures.",
+        "location": "early"
+      },
+      {
+        "quote": "Adieu! my cousin; take care of yourself; and, I entreat you, write! “Elizabeth Lavenza. “Geneva, March 18th, 17—.” “Dear, dear Elizabeth!” I exclaimed, when I had read her letter: “I will write instantly and relieve…",
+        "location": "early"
+      },
+      {
+        "quote": "My uncle will send me news of your health, and if I see but one smile on your lips when we meet, occasioned by this or any other exertion of mine, I shall need no other happiness. “Elizabeth Lavenza. “Geneva, May 18th,…",
+        "location": "late"
+      }
+    ],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:15:00.638870+00:00"
+  },
+  {
+    "character_id": "gutenberg-84-canon-265039f2f7",
+    "book_id": "gutenberg-84",
+    "character_name": "Caroline Beaufort",
+    "aliases": [
+      "Caroline Beaufort",
+      "Caroline"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "But Caroline Beaufort possessed a mind of an uncommon mould, and her courage rose to support her in her adversity.",
+        "location": "early"
+      },
+      {
+        "quote": "Two years after this event Caroline became his wife.",
+        "location": "early"
+      },
+      {
+        "quote": "It was an historical subject, painted at my father’s desire, and represented Caroline Beaufort in an agony of despair, kneeling by the coffin of her dead father.",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:15:00.638870+00:00"
+  },
+  {
+    "character_id": "gutenberg-84-canon-f42c07d604",
+    "book_id": "gutenberg-84",
+    "character_name": "William Frankenstein",
+    "aliases": [
+      "William Frankenstein"
+    ],
+    "role": "main",
+    "evidence_quotes": [],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:15:00.638870+00:00"
+  },
+  {
+    "character_id": "gutenberg-84-canon-1680924ec3",
+    "book_id": "gutenberg-84",
+    "character_name": "Henry Clerval",
+    "aliases": [
+      "Henry Clerval"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "As it drew nearer I observed that it was the Swiss diligence; it stopped just where I was standing, and on the door being opened, I perceived Henry Clerval, who, on seeing me, instantly sprung out. “My dear…",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:15:00.638870+00:00"
+  },
+  {
+    "character_id": "gutenberg-84-canon-be8446cbb3",
+    "book_id": "gutenberg-84",
+    "character_name": "Justine Moritz",
+    "aliases": [
+      "Justine Moritz",
+      "Madame Moritz"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "Do you remember on what occasion Justine Moritz entered our family?",
+        "location": "early"
+      },
+      {
+        "quote": "Madame Moritz, her mother, was a widow with four children, of whom Justine was the third.",
+        "location": "early"
+      },
+      {
+        "quote": "Perpetual fretting at length threw Madame Moritz into a decline, which at first increased her irritability, but she is now at peace for ever.",
+        "location": "early"
+      },
+      {
+        "quote": "Indeed, who would credit that Justine Moritz, who was so amiable, and fond of all the family, could suddenly become so capable of so frightful, so appalling a crime?” “Justine Moritz!",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:15:00.638870+00:00"
+  },
+  {
+    "character_id": "gutenberg-84-canon-c3ecc299f6",
+    "book_id": "gutenberg-84",
+    "character_name": "Ernest Frankenstein",
+    "aliases": [
+      "Ernest Frankenstein"
+    ],
+    "role": "main",
+    "evidence_quotes": [],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:15:00.638870+00:00"
+  },
+  {
+    "character_id": "gutenberg-84-canon-7de3ed58e1",
+    "book_id": "gutenberg-84",
+    "character_name": "Robert Walton",
+    "aliases": [
+      "Robert Walton",
+      "R. Walton"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "Your affectionate brother, Robert Walton Letter 3 _To Mrs.",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:15:00.638870+00:00"
+  },
+  {
+    "character_id": "gutenberg-84-canon-27b007ee09",
+    "book_id": "gutenberg-84",
+    "character_name": "de Lacey",
+    "aliases": [
+      "de Lacey"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "It was one which could not fail to impress itself deeply on my mind, unfolding as it did a number of circumstances, each interesting and wonderful to one so utterly inexperienced as I was. “The name of the old man was…",
+        "location": "middle"
+      },
+      {
+        "quote": "He quickly arranged with the Turk that if the latter should find a favourable opportunity for escape before Felix could return to Italy, Safie should remain as a boarder at a convent at Leghorn; and then, quitting the…",
+        "location": "middle"
+      },
+      {
+        "quote": "My voice, although harsh, had nothing terrible in it; I thought, therefore, that if in the absence of his children I could gain the good will and mediation of the old De Lacey, I might by his means be tolerated by my…",
+        "location": "middle"
+      },
+      {
+        "quote": "I ought to have familiarised the old De Lacey to me, and by degrees to have discovered myself to the rest of his family, when they should have been prepared for my approach.",
+        "location": "middle"
+      }
+    ],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:15:00.638870+00:00"
+  },
+  {
+    "character_id": "gutenberg-84-canon-75a9a4588a",
+    "book_id": "gutenberg-84",
+    "character_name": "Safie",
+    "aliases": [
+      "Safie",
+      "The Arabian"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "I was like the Arabian who had been buried with the dead and found a passage to life, aided only by one glimmering and seemingly ineffectual light.",
+        "location": "early"
+      },
+      {
+        "quote": "A few months before my arrival they had lived in a large and luxurious city called Paris, surrounded by friends and possessed of every enjoyment which virtue, refinement of intellect, or taste, accompanied by a moderate…",
+        "location": "middle"
+      },
+      {
+        "quote": "He quickly arranged with the Turk that if the latter should find a favourable opportunity for escape before Felix could return to Italy, Safie should remain as a boarder at a convent at Leghorn; and then, quitting the…",
+        "location": "middle"
+      },
+      {
+        "quote": "The presence of Safie diffused happiness among its inhabitants, and I also found that a greater degree of plenty reigned there.",
+        "location": "middle"
+      }
+    ],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:15:00.638870+00:00"
+  },
+  {
+    "character_id": "gutenberg-84-canon-26b2a21d86",
+    "book_id": "gutenberg-84",
+    "character_name": "Felix",
+    "aliases": [
+      "Felix"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "In the midst of poverty and want, Felix carried with pleasure to his sister the first little white flower that peeped out from beneath the snowy ground.",
+        "location": "middle"
+      },
+      {
+        "quote": "She appeared affected by different feelings; wiping a few tears from her lovely eyes, she held out her hand to Felix, who kissed it rapturously and called her, as well as I could distinguish, his sweet Arabian.",
+        "location": "middle"
+      },
+      {
+        "quote": "Felix rejected his offers with contempt, yet when he saw the lovely Safie, who was allowed to visit her father and who by her gestures expressed her lively gratitude, the youth could not help owning to his own mind that…",
+        "location": "middle"
+      },
+      {
+        "quote": "The arrival of the Arabian now infused new life into his soul. “When the news reached Leghorn that Felix was deprived of his wealth and rank, the merchant commanded his daughter to think no more of her lover, but to…",
+        "location": "middle"
+      }
+    ],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:15:00.638870+00:00"
+  },
+  {
+    "character_id": "gutenberg-84-canon-a582540f18",
+    "book_id": "gutenberg-84",
+    "character_name": "Beaufort",
+    "aliases": [
+      "Beaufort"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "This man, whose name was Beaufort, was of a proud and unbending disposition and could not bear to live in poverty and oblivion in the same country where he had formerly been distinguished for his rank and magnificence.",
+        "location": "early"
+      },
+      {
+        "quote": "My father loved Beaufort with the truest friendship and was deeply grieved by his retreat in these unfortunate circumstances.",
+        "location": "early"
+      },
+      {
+        "quote": "Beaufort had taken effectual measures to conceal himself, and it was ten months before my father discovered his abode.",
+        "location": "early"
+      },
+      {
+        "quote": "Beaufort had saved but a very small sum of money from the wreck of his fortunes, but it was sufficient to provide him with sustenance for some months, and in the meantime he hoped to procure some respectable employment…",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:15:00.638870+00:00"
+  },
+  {
+    "character_id": "gutenberg-84-canon-dc84c49fe7",
+    "book_id": "gutenberg-84",
+    "character_name": "Cornelius Agrippa",
+    "aliases": [
+      "Cornelius Agrippa"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "In this house I chanced to find a volume of the works of Cornelius Agrippa.",
+        "location": "early"
+      },
+      {
+        "quote": "All that he said threw greatly into the shade Cornelius Agrippa, Albertus Magnus, and Paracelsus, the lords of my imagination; but by some fatality the overthrow of these men disinclined me to pursue my accustomed…",
+        "location": "early"
+      },
+      {
+        "quote": "Professor Krempe often asked me, with a sly smile, how Cornelius Agrippa went on, whilst M.",
+        "location": "early"
+      },
+      {
+        "quote": "A youngster who, but a few years ago, believed in Cornelius Agrippa as firmly as in the gospel, has now set himself at the head of the university; and if he is not soon pulled down, we shall all be out of…",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:15:00.638870+00:00"
+  },
+  {
+    "character_id": "gutenberg-84-canon-8345e10b62",
+    "book_id": "gutenberg-84",
+    "character_name": "Albertus Magnus",
+    "aliases": [
+      "Albertus Magnus"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "When I returned home my first care was to procure the whole works of this author, and afterwards of Paracelsus and Albertus Magnus.",
+        "location": "early"
+      },
+      {
+        "quote": "All that he said threw greatly into the shade Cornelius Agrippa, Albertus Magnus, and Paracelsus, the lords of my imagination; but by some fatality the overthrow of these men disinclined me to pursue my accustomed…",
+        "location": "early"
+      },
+      {
+        "quote": "I little expected, in this enlightened and scientific age, to find a disciple of Albertus Magnus and Paracelsus.",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:15:00.638870+00:00"
+  },
+  {
+    "character_id": "gutenberg-84-canon-7d0566814d",
+    "book_id": "gutenberg-84",
+    "character_name": "Augustus",
+    "aliases": [
+      "Augustus"
+    ],
+    "role": "main",
+    "evidence_quotes": [],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:15:00.638870+00:00"
+  },
+  {
+    "character_id": "gutenberg-84-canon-f52013342f",
+    "book_id": "gutenberg-84",
+    "character_name": "Uncle Thomas",
+    "aliases": [
+      "Uncle Thomas"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "You may remember that a history of all the voyages made for purposes of discovery composed the whole of our good Uncle Thomas’ library.",
+        "location": "early"
+      },
+      {
+        "quote": "But it is a still greater evil to me that I am self-educated: for the first fourteen years of my life I ran wild on a common and read nothing but our Uncle Thomas’ books of voyages.",
+        "location": "early"
+      }
+    ],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:15:00.638870+00:00"
+  },
+  {
+    "character_id": "gutenberg-84-canon-22c197ab55",
+    "book_id": "gutenberg-84",
+    "character_name": "Mrs. Saville",
+    "aliases": [
+      "Mrs. Saville",
+      "Margaret"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "There, Margaret, the sun is for ever visible, its broad disk just skirting the horizon and diffusing a perpetual splendour.",
+        "location": "early"
+      },
+      {
+        "quote": "Farewell, my dear, excellent Margaret.",
+        "location": "early"
+      },
+      {
+        "quote": "Margaret, if you had seen the man who thus capitulated for his safety, your surprise would have been boundless.",
+        "location": "early"
+      },
+      {
+        "quote": "You have read this strange and terrific story, Margaret; and do you not feel your blood congeal with horror, like that which even now curdles mine?",
+        "location": "late"
+      }
+    ],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:15:00.638870+00:00"
+  },
+  {
+    "character_id": "gutenberg-1342-canon-44c93e08f8",
+    "book_id": "gutenberg-1342",
+    "character_name": "Elizabeth Bennet",
+    "aliases": [
+      "Elizabeth Bennet",
+      "Miss Bennet",
+      "Eliza Bennet",
+      "Lizzy"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "Bingley will like it” 6 “I’m the tallest” 9 “He rode a black horse” 10 “When the party entered” 12 “She is tolerable” 15 Heading to Chapter IV. 18 Heading to Chapter V. 22 “Without once opening his lips” 24 Tailpiece to…",
+        "location": "early"
+      },
+      {
+        "quote": "Bingley was the principal spokesman, and Miss Bennet the principal object.",
+        "location": "early"
+      },
+      {
+        "quote": "She says Lizzy had better have taken Mr.",
+        "location": "middle"
+      },
+      {
+        "quote": "It would vex me, indeed, to see you again the dupe of Miss Bingley’s pretended regard.” “Would you believe it, Lizzy, that when he went to town last November he really loved me, and nothing but a persuasion of _my_…",
+        "location": "late"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "Bingley and his eldest sister, to observe the game. “Is Miss Darcy much grown since the spring?” said Miss Bingley: “will she be as tall as I am?” “I think she will. She is now about Miss Elizabeth Bennet’s height, or…",
+        "location": "early"
+      },
+      {
+        "quote": "His plan did not vary on seeing them. Miss Bennet’s lovely face confirmed his views, and established all his strictest notions of what was due to seniority; and for the first evening _she_ was his settled choice. The…",
+        "location": "early"
+      },
+      {
+        "quote": "Here, Sarah, come to Miss Bennet this moment, and help her on with her gown. Never mind Miss Lizzy’s hair.” “We will be down as soon as we can,” said Jane; “but I dare say Kitty is forwarder than either of us, for she…",
+        "location": "late"
+      },
+      {
+        "quote": "Her figure was elegant, and she walked well; but Darcy, at whom it was all aimed, was still inflexibly studious. In the desperation of her feelings, she resolved on one effort more; and, turning to Elizabeth, said,--…",
+        "location": "early"
+      },
+      {
+        "quote": "Gardiner, looking at the picture; “it is a handsome face. But, Lizzy, you can tell us whether it is like or not.” Mrs. Reynolds’ respect for Elizabeth seemed to increase on this intimation of her knowing her master.…",
+        "location": "middle"
+      },
+      {
+        "quote": "I remember the time when I liked a red coat myself very well--and, indeed, so I do still at my heart; and if a smart young colonel, with five or six thousand a year, should want one of my girls, I shall not say nay to…",
+        "location": "early"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:46:08.837142+00:00"
+  },
+  {
+    "character_id": "gutenberg-1342-canon-f33e9658b5",
+    "book_id": "gutenberg-1342",
+    "character_name": "Mr. Darcy",
+    "aliases": [
+      "Mr. Darcy",
+      "Mr. Fitzwilliam Darcy",
+      "Darcy"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "Although Miss Austen always liked something of the misunderstanding kind, which afforded her opportunities for the display of the peculiar and incomparable talent to be noticed presently, she has been satisfied here…",
+        "location": "early"
+      },
+      {
+        "quote": "Darcy bequeathed me the next presentation of the best living in his gift.",
+        "location": "early"
+      },
+      {
+        "quote": "Anne would have been a delightful performer, had her health allowed her to learn.” Elizabeth looked at Darcy, to see how cordially he assented to his cousin’s praise: but neither at that moment nor at any other could…",
+        "location": "middle"
+      },
+      {
+        "quote": "Darcy it was now a matter of anxiety to think well; and, as far as their acquaintance reached, there was no fault to find.",
+        "location": "late"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "His appearance was greatly in his favour: he had all the best parts of beauty, a fine countenance, a good figure, and very pleasing address. The introduction was followed up on his side by a happy readiness of…",
+        "location": "early"
+      },
+      {
+        "quote": "Hurst, merely looked the gentleman; but his friend Mr. Darcy soon drew the attention of the room by his fine, tall person, handsome features, noble mien, and the report, which was in general circulation within five…",
+        "location": "early"
+      },
+      {
+        "quote": "Darcy;--but let me not interrupt you, sir. You will not thank me for detaining you from the bewitching converse of that young lady, whose bright eyes are also upbraiding me.” [Illustration: “Such very superior dancing…",
+        "location": "early"
+      },
+      {
+        "quote": "At last it arrested her--and she beheld a striking resemblance of Mr. Darcy, with such a smile over the face, as she remembered to have sometimes seen, when he looked at her. She stood several minutes before the…",
+        "location": "middle"
+      },
+      {
+        "quote": "She found it difficult to obtain even a word from her beyond a monosyllable. Miss Darcy was tall, and on a larger scale than Elizabeth; and, though little more than sixteen, her figure was formed, and her appearance…",
+        "location": "late"
+      },
+      {
+        "quote": "I appeal to Mr. Darcy;--but let me not interrupt you, sir. You will not thank me for detaining you from the bewitching converse of that young lady, whose bright eyes are also upbraiding me.” [Illustration: “Such very…",
+        "location": "early"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:46:08.837142+00:00"
+  },
+  {
+    "character_id": "gutenberg-1342-canon-1aba03604e",
+    "book_id": "gutenberg-1342",
+    "character_name": "Mr. Bingley",
+    "aliases": [
+      "Charles Bingley",
+      "Mr. Bingley"
+    ],
+    "role": "main",
+    "evidence_quotes": [],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:46:08.837142+00:00"
+  },
+  {
+    "character_id": "gutenberg-1342-canon-a78607dd71",
+    "book_id": "gutenberg-1342",
+    "character_name": "Jane Bennet",
+    "aliases": [
+      "Jane Bennet",
+      "Miss Bennet",
+      "Jane"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "EBOOK PRIDE AND PREJUDICE *** [Illustration: GEORGE ALLEN PUBLISHER 156 CHARING CROSS ROAD LONDON RUSKIN HOUSE ] [Illustration: _Reading Jane’s Letters._ _Chap 34._ ] PRIDE. and PREJUDICE by Jane Austen, with a Preface…",
+        "location": "early"
+      },
+      {
+        "quote": "Bingley was the principal spokesman, and Miss Bennet the principal object.",
+        "location": "early"
+      },
+      {
+        "quote": "Anything beyond the very neighbourhood of Longbourn, I suppose, would appear far.” As he spoke there was a sort of smile, which Elizabeth fancied she understood; he must be supposing her to be thinking of Jane and…",
+        "location": "middle"
+      },
+      {
+        "quote": "Elizabeth was surprised, however, that Wickham should consent to such a scheme; and, had she consulted only her own inclination, any meeting with him would have been the last object of her wishes. [Illustration: “With…",
+        "location": "late"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "His plan did not vary on seeing them. Miss Bennet’s lovely face confirmed his views, and established all his strictest notions of what was due to seniority; and for the first evening _she_ was his settled choice. The…",
+        "location": "early"
+      },
+      {
+        "quote": "Darcy;--but let me not interrupt you, sir. You will not thank me for detaining you from the bewitching converse of that young lady, whose bright eyes are also upbraiding me.” [Illustration: “Such very superior dancing…",
+        "location": "early"
+      },
+      {
+        "quote": "In ran Mrs. Bennet to her daughters’ room, in her dressing-gown, and with her hair half finished, crying out,-- “My dear Jane, make haste and hurry down. He is come--Mr.",
+        "location": "late"
+      },
+      {
+        "quote": "Here, Sarah, come to Miss Bennet this moment, and help her on with her gown. Never mind Miss Lizzy’s hair.” “We will be down as soon as we can,” said Jane; “but I dare say Kitty is forwarder than either of us, for she…",
+        "location": "late"
+      },
+      {
+        "quote": "Darcy,” observed Miss Bingley, in a half whisper, “that this adventure has rather affected your admiration of her fine eyes.” “Not at all,” he replied: “they were brightened by the exercise.” A short pause followed this…",
+        "location": "early"
+      },
+      {
+        "quote": "The envelope contained a sheet of elegant, little, hot-pressed paper, well covered with a lady’s fair, flowing hand; and Elizabeth saw her sister’s countenance change as she read it, and saw her dwelling intently on…",
+        "location": "early"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:46:08.837142+00:00"
+  },
+  {
+    "character_id": "gutenberg-1342-canon-121ce36169",
+    "book_id": "gutenberg-1342",
+    "character_name": "Mr. Bennet",
+    "aliases": [
+      "Mr. Bennet"
+    ],
+    "role": "main",
+    "evidence_quotes": [],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:46:08.837142+00:00"
+  },
+  {
+    "character_id": "gutenberg-1342-canon-fb00a5e7a7",
+    "book_id": "gutenberg-1342",
+    "character_name": "Mrs. Bennet",
+    "aliases": [
+      "Mrs. Bennet"
+    ],
+    "role": "main",
+    "evidence_quotes": [],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:46:08.837142+00:00"
+  },
+  {
+    "character_id": "gutenberg-1342-canon-269d15f735",
+    "book_id": "gutenberg-1342",
+    "character_name": "Lydia Bennet",
+    "aliases": [
+      "Lydia Bennet",
+      "Lydia"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "The elopement of Lydia and Wickham is not, like that of Crawford and Mrs.",
+        "location": "early"
+      },
+      {
+        "quote": "Kitty and Lydia take his defection much more to heart than I do.",
+        "location": "middle"
+      },
+      {
+        "quote": "Her pale face and impetuous manner made him start, and before he could recover himself enough to speak, she, in whose mind every idea was superseded by Lydia’s situation, hastily exclaimed, “I beg your pardon, but I…",
+        "location": "late"
+      },
+      {
+        "quote": "To be sure, it would have been more for the advantage of conversation, had Miss Lydia Bennet come upon the town; or, as the happiest alternative, been secluded from the world in some distant farm-house.",
+        "location": "late"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "Bingley with having promised on his first coming into the country to give a ball at Netherfield. Lydia was a stout, well-grown girl of fifteen, with a fine complexion and good-humoured countenance; a favourite with her…",
+        "location": "early"
+      },
+      {
+        "quote": "Darcy appeared. Her pale face and impetuous manner made him start, and before he could recover himself enough to speak, she, in whose mind every idea was superseded by Lydia’s situation, hastily exclaimed, “I beg your…",
+        "location": "late"
+      },
+      {
+        "quote": "When they get to our age, I dare say they will not think about officers any more than we do. I remember the time when I liked a red coat myself very well--and, indeed, so I do still at my heart; and if a smart young…",
+        "location": "early"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:46:08.837142+00:00"
+  },
+  {
+    "character_id": "gutenberg-1342-canon-c49d0d717c",
+    "book_id": "gutenberg-1342",
+    "character_name": "Mr. Collins",
+    "aliases": [
+      "Mr. Collins"
+    ],
+    "role": "main",
+    "evidence_quotes": [],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:46:08.837142+00:00"
+  },
+  {
+    "character_id": "gutenberg-1342-canon-6beba13a27",
+    "book_id": "gutenberg-1342",
+    "character_name": "Lady Catherine de Bourgh",
+    "aliases": [
+      "Lady Catherine de Bourgh",
+      "Lady Catherine"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "Bennet and of Lady Catherine de Bourgh.",
+        "location": "early"
+      },
+      {
+        "quote": "Find such a woman as soon as you can, bring her to Hunsford, and I will visit her.’ Allow me, by the way, to observe, my fair cousin, that I do not reckon the notice and kindness of Lady Catherine de Bourgh as among the…",
+        "location": "early"
+      },
+      {
+        "quote": "The party then gathered round the fire to hear Lady Catherine determine what weather they were to have on the morrow.",
+        "location": "middle"
+      },
+      {
+        "quote": "It was Lady Catherine de Bourgh.",
+        "location": "late"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "Bingley will like it” 6 “I’m the tallest” 9 “He rode a black horse” 10 “When the party entered” 12 “She is tolerable” 15 Heading to Chapter IV. 18 Heading to Chapter V. 22 “Without once opening his lips” 24 Tailpiece to…",
+        "location": "early"
+      },
+      {
+        "quote": "Is she handsome?” “She is a most charming young lady, indeed. Lady Catherine herself says that, in point of true beauty, Miss de Bourgh is far superior to the handsomest of her sex; because there is that in her features…",
+        "location": "early"
+      },
+      {
+        "quote": "Elizabeth found herself quite equal to the scene, and could observe the three ladies before her composedly. Lady Catherine was a tall, large woman, with strongly-marked features, which might once have been handsome. Her…",
+        "location": "middle"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:46:08.837142+00:00"
+  },
+  {
+    "character_id": "gutenberg-1342-canon-339e7fa449",
+    "book_id": "gutenberg-1342",
+    "character_name": "George Wickham",
+    "aliases": [
+      "George Wickham",
+      "Wickham"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "The elopement of Lydia and Wickham is not, like that of Crawford and Mrs.",
+        "location": "early"
+      },
+      {
+        "quote": "Darcy is not in the least to blame; that he cannot bear to hear George Wickham mentioned; and that though my brother thought he could not well avoid including him in his invitation to the officers, he was excessively…",
+        "location": "early"
+      },
+      {
+        "quote": "She dreaded seeing Wickham again, and was resolved to avoid it as long as possible.",
+        "location": "middle"
+      },
+      {
+        "quote": "How I long to see her! and to see dear Wickham too!",
+        "location": "late"
+      }
+    ],
+    "appearance_quotes": [
+      {
+        "quote": "The envelope contained a sheet of elegant, little, hot-pressed paper, well covered with a lady’s fair, flowing hand; and Elizabeth saw her sister’s countenance change as she read it, and saw her dwelling intently on…",
+        "location": "early"
+      }
+    ],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:46:08.837142+00:00"
+  },
+  {
+    "character_id": "gutenberg-1342-canon-ad5ec7af48",
+    "book_id": "gutenberg-1342",
+    "character_name": "Charlotte Lucas",
+    "aliases": [
+      "Charlotte Lucas",
+      "Miss Lucas"
+    ],
+    "role": "main",
+    "evidence_quotes": [
+      {
+        "quote": "Bennet’s anguish over the entail._ _The Bingleys and the Gardiners and the Lucases, Miss Darcy and Miss de Bourgh, Jane, Wickham, and the rest, must pass without special comment, further than the remark that Charlotte…",
+        "location": "early"
+      },
+      {
+        "quote": "Elizabeth, for the sake of saying something that might turn her mother’s thoughts, now asked her if Charlotte Lucas had been at Longbourn since _her_ coming away. “Yes, she called yesterday with her father.",
+        "location": "early"
+      },
+      {
+        "quote": "Bennet was alone, than she likewise began on the subject, calling on Miss Lucas for her compassion, and entreating her to persuade her friend Lizzy to comply with the wishes of her family. “Pray do, my dear Miss Lucas,”…",
+        "location": "early"
+      },
+      {
+        "quote": "Collins! my dear Charlotte, impossible!” The steady countenance which Miss Lucas had commanded in telling her story gave way to a momentary confusion here on receiving so direct a reproach; though, as it was no more…",
+        "location": "middle"
+      }
+    ],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:46:08.837142+00:00"
+  },
+  {
+    "character_id": "gutenberg-1342-canon-1390363bdd",
+    "book_id": "gutenberg-1342",
+    "character_name": "Mr. Hurst",
+    "aliases": [
+      "Mr. Hurst"
+    ],
+    "role": "main",
+    "evidence_quotes": [],
+    "appearance_quotes": [],
+    "verified": false,
+    "source": "gpt_prepare",
+    "created_at": "2026-03-18T15:46:08.837142+00:00"
+  }
+]

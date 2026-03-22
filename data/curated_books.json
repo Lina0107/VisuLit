@@ -1,0 +1,385 @@
+[
+  {
+    "book_id": "gutenberg-1342",
+    "title": "Pride and Prejudice",
+    "author": "Jane Austen",
+    "popularity_score": 100,
+    "era": "Regency",
+    "country": "England",
+    "historical_style": "Regency era, early 19th century English gentry, formal dress"
+  },
+  {
+    "book_id": "gutenberg-158",
+    "title": "Emma",
+    "author": "Jane Austen",
+    "popularity_score": 98,
+    "era": "Regency",
+    "country": "England",
+    "historical_style": "Regency era, early 19th century English countryside society"
+  },
+  {
+    "book_id": "gutenberg-161",
+    "title": "Sense and Sensibility",
+    "author": "Jane Austen",
+    "popularity_score": 96,
+    "era": "Regency",
+    "country": "England",
+    "historical_style": "Regency era, early 19th century English society, formal attire"
+  },
+  {
+    "book_id": "gutenberg-105",
+    "title": "Persuasion",
+    "author": "Jane Austen",
+    "popularity_score": 94,
+    "era": "Regency",
+    "country": "England",
+    "historical_style": "Regency era, early 19th century England, naval influence"
+  },
+  {
+    "book_id": "gutenberg-141",
+    "title": "Mansfield Park",
+    "author": "Jane Austen",
+    "popularity_score": 92,
+    "era": "Regency",
+    "country": "England",
+    "historical_style": "Regency era, early 19th century English estate life"
+  },
+  {
+    "book_id": "gutenberg-121",
+    "title": "Northanger Abbey",
+    "author": "Jane Austen",
+    "popularity_score": 90,
+    "era": "Regency",
+    "country": "England",
+    "historical_style": "Regency era, early 19th century England, gothic parody tone"
+  },
+
+  {
+    "book_id": "gutenberg-1260",
+    "title": "Jane Eyre",
+    "author": "Charlotte Brontë",
+    "popularity_score": 99,
+    "era": "Victorian",
+    "country": "England",
+    "historical_style": "Victorian era, mid-19th century England, modest governess attire"
+  },
+  {
+    "book_id": "gutenberg-768",
+    "title": "Wuthering Heights",
+    "author": "Emily Brontë",
+    "popularity_score": 93,
+    "era": "Georgian/Victorian transition",
+    "country": "England",
+    "historical_style": "Late 18th to early 19th century Yorkshire moors, rustic gentry"
+  },
+
+  {
+    "book_id": "gutenberg-345",
+    "title": "Dracula",
+    "author": "Bram Stoker",
+    "popularity_score": 97,
+    "era": "Victorian",
+    "country": "England / Transylvania",
+    "historical_style": "Late 19th century Victorian gothic, formal coats, gaslight mood"
+  },
+  {
+    "book_id": "gutenberg-84",
+    "title": "Frankenstein; Or, The Modern Prometheus",
+    "author": "Mary Wollstonecraft Shelley",
+    "popularity_score": 95,
+    "era": "Romantic era",
+    "country": "Europe",
+    "historical_style": "Early 19th century European romantic gothic, scientific motifs"
+  },
+  {
+    "book_id": "gutenberg-43",
+    "title": "Strange Case of Dr Jekyll and Mr Hyde",
+    "author": "Robert Louis Stevenson",
+    "popularity_score": 91,
+    "era": "Victorian",
+    "country": "England",
+    "historical_style": "Late 19th century London, Victorian professional attire"
+  },
+
+  {
+    "book_id": "gutenberg-98",
+    "title": "A Tale of Two Cities",
+    "author": "Charles Dickens",
+    "popularity_score": 92,
+    "era": "Late 18th century",
+    "country": "England / France",
+    "historical_style": "French Revolution era clothing, 1770s–1790s European style"
+  },
+  {
+    "book_id": "gutenberg-1400",
+    "title": "Great Expectations",
+    "author": "Charles Dickens",
+    "popularity_score": 90,
+    "era": "Victorian",
+    "country": "England",
+    "historical_style": "Mid-19th century Victorian England, class contrast"
+  },
+  {
+    "book_id": "gutenberg-730",
+    "title": "Oliver Twist",
+    "author": "Charles Dickens",
+    "popularity_score": 88,
+    "era": "Victorian",
+    "country": "England",
+    "historical_style": "Early Victorian London, workhouse and street life"
+  },
+  {
+    "book_id": "gutenberg-46",
+    "title": "A Christmas Carol",
+    "author": "Charles Dickens",
+    "popularity_score": 87,
+    "era": "Victorian",
+    "country": "England",
+    "historical_style": "Victorian London winter, 1840s clothing, cozy interiors"
+  },
+
+  {
+    "book_id": "gutenberg-1661",
+    "title": "The Adventures of Sherlock Holmes",
+    "author": "Arthur Conan Doyle",
+    "popularity_score": 96,
+    "era": "Victorian",
+    "country": "England",
+    "historical_style": "Late 19th century London, Victorian detective aesthetic"
+  },
+  {
+    "book_id": "gutenberg-244",
+    "title": "A Study in Scarlet",
+    "author": "Arthur Conan Doyle",
+    "popularity_score": 88,
+    "era": "Victorian",
+    "country": "England / USA",
+    "historical_style": "Late 19th century, Victorian London + American frontier segments"
+  },
+  {
+    "book_id": "gutenberg-2852",
+    "title": "The Hound of the Baskervilles",
+    "author": "Arthur Conan Doyle",
+    "popularity_score": 90,
+    "era": "Edwardian/Victorian transition",
+    "country": "England",
+    "historical_style": "Late Victorian/early Edwardian England, moorland gothic mystery"
+  },
+
+  {
+    "book_id": "gutenberg-11",
+    "title": "Alice’s Adventures in Wonderland",
+    "author": "Lewis Carroll",
+    "popularity_score": 94,
+    "era": "Victorian",
+    "country": "England (fantasy)",
+    "historical_style": "Victorian children’s clothing, whimsical surreal scenes"
+  },
+  {
+    "book_id": "gutenberg-12",
+    "title": "Through the Looking-Glass",
+    "author": "Lewis Carroll",
+    "popularity_score": 86,
+    "era": "Victorian",
+    "country": "England (fantasy)",
+    "historical_style": "Victorian whimsical fantasy, storybook illustration vibe"
+  },
+
+  {
+    "book_id": "gutenberg-16",
+    "title": "Peter Pan",
+    "author": "J. M. Barrie",
+    "popularity_score": 85,
+    "era": "Edwardian",
+    "country": "England (fantasy)",
+    "historical_style": "Early 20th century Edwardian London + Neverland fantasy"
+  },
+  {
+    "book_id": "gutenberg-55",
+    "title": "The Wonderful Wizard of Oz",
+    "author": "L. Frank Baum",
+    "popularity_score": 92,
+    "era": "1900s (turn of the century)",
+    "country": "USA (fantasy)",
+    "historical_style": "Early 20th century American rural + bright fantasy worlds"
+  },
+
+  {
+    "book_id": "gutenberg-74",
+    "title": "The Adventures of Tom Sawyer",
+    "author": "Mark Twain",
+    "popularity_score": 90,
+    "era": "19th century",
+    "country": "USA",
+    "historical_style": "Mid-19th century American small-town Mississippi River life"
+  },
+  {
+    "book_id": "gutenberg-76",
+    "title": "Adventures of Huckleberry Finn",
+    "author": "Mark Twain",
+    "popularity_score": 88,
+    "era": "19th century",
+    "country": "USA",
+    "historical_style": "Mid-19th century American river journey, rural clothing"
+  },
+
+  {
+    "book_id": "gutenberg-2701",
+    "title": "Moby-Dick; or, The Whale",
+    "author": "Herman Melville",
+    "popularity_score": 86,
+    "era": "19th century",
+    "country": "USA",
+    "historical_style": "Mid-19th century whaling ship, maritime workwear"
+  },
+  {
+    "book_id": "gutenberg-33",
+    "title": "The Scarlet Letter",
+    "author": "Nathaniel Hawthorne",
+    "popularity_score": 82,
+    "era": "17th century",
+    "country": "Colonial America",
+    "historical_style": "Puritan New England, 1600s colonial dress"
+  },
+
+  {
+    "book_id": "gutenberg-514",
+    "title": "Little Women",
+    "author": "Louisa May Alcott",
+    "popularity_score": 92,
+    "era": "American Civil War era",
+    "country": "USA",
+    "historical_style": "1860s America, modest dresses, domestic interiors"
+  },
+  {
+    "book_id": "gutenberg-45",
+    "title": "Anne of Green Gables",
+    "author": "L. M. Montgomery",
+    "popularity_score": 89,
+    "era": "Late 19th century",
+    "country": "Canada",
+    "historical_style": "Late 1800s rural Prince Edward Island, simple period clothing"
+  },
+
+  {
+    "book_id": "gutenberg-174",
+    "title": "The Picture of Dorian Gray",
+    "author": "Oscar Wilde",
+    "popularity_score": 90,
+    "era": "Victorian",
+    "country": "England",
+    "historical_style": "Late Victorian high society, formal suits, decadent interiors"
+  },
+
+  {
+    "book_id": "gutenberg-35",
+    "title": "The Time Machine",
+    "author": "H. G. Wells",
+    "popularity_score": 85,
+    "era": "Victorian",
+    "country": "England (sci-fi)",
+    "historical_style": "Late 19th century scientific Victorian style + speculative future"
+  },
+  {
+    "book_id": "gutenberg-36",
+    "title": "The War of the Worlds",
+    "author": "H. G. Wells",
+    "popularity_score": 84,
+    "era": "Victorian",
+    "country": "England (sci-fi)",
+    "historical_style": "Late 19th century England, Victorian urban/rural"
+  },
+  {
+    "book_id": "gutenberg-5230",
+    "title": "The Invisible Man",
+    "author": "H. G. Wells",
+    "popularity_score": 82,
+    "era": "Victorian",
+    "country": "England (sci-fi)",
+    "historical_style": "Late 19th century England, Victorian coats and villages"
+  },
+
+  {
+    "book_id": "gutenberg-120",
+    "title": "Treasure Island",
+    "author": "Robert Louis Stevenson",
+    "popularity_score": 86,
+    "era": "18th century (pirate era)",
+    "country": "Atlantic world",
+    "historical_style": "18th century pirate/naval clothing, seafaring adventure"
+  },
+  {
+    "book_id": "gutenberg-236",
+    "title": "The Jungle Book",
+    "author": "Rudyard Kipling",
+    "popularity_score": 80,
+    "era": "Colonial-era storytelling",
+    "country": "India (fictionalized)",
+    "historical_style": "Mythic jungle adventure, storybook illustration tone"
+  },
+
+  {
+    "book_id": "gutenberg-6130",
+    "title": "The Iliad",
+    "author": "Homer",
+    "popularity_score": 78,
+    "era": "Ancient Greece",
+    "country": "Greece",
+    "historical_style": "Bronze Age / Ancient Greek heroic style, armor and tunics"
+  },
+  {
+    "book_id": "gutenberg-1727",
+    "title": "The Odyssey",
+    "author": "Homer",
+    "popularity_score": 78,
+    "era": "Ancient Greece",
+    "country": "Greece",
+    "historical_style": "Ancient Greek epic, tunics, ships, mythic motifs"
+  },
+
+  {
+    "book_id": "gutenberg-1513",
+    "title": "Romeo and Juliet",
+    "author": "William Shakespeare",
+    "popularity_score": 88,
+    "era": "Renaissance",
+    "country": "Italy (Verona)",
+    "historical_style": "Renaissance Italy, 16th-century formal clothing"
+  },
+  {
+    "book_id": "gutenberg-1524",
+    "title": "Hamlet",
+    "author": "William Shakespeare",
+    "popularity_score": 86,
+    "era": "Medieval/Renaissance staging",
+    "country": "Denmark (Elsinore)",
+    "historical_style": "Historic European court attire, dramatic theatrical mood"
+  },
+  {
+    "book_id": "gutenberg-1533",
+    "title": "Macbeth",
+    "author": "William Shakespeare",
+    "popularity_score": 84,
+    "era": "Medieval",
+    "country": "Scotland",
+    "historical_style": "Medieval Scottish court, dark dramatic atmosphere"
+  },
+  {
+    "book_id": "gutenberg-1531",
+    "title": "Othello",
+    "author": "William Shakespeare",
+    "popularity_score": 82,
+    "era": "Renaissance",
+    "country": "Venice / Cyprus",
+    "historical_style": "Renaissance Venice military and court dress"
+  },
+  {
+    "book_id": "gutenberg-1514",
+    "title": "A Midsummer Night’s Dream",
+    "author": "William Shakespeare",
+    "popularity_score": 80,
+    "era": "Mythic/renaissance stage",
+    "country": "Greece (mythic)",
+    "historical_style": "Theatrical fairy fantasy, period-inspired costumes"
+  }
+]

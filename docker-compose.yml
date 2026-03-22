@@ -1,0 +1,49 @@
+services:
+  flask:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    environment:
+      # Provide these in production (recommended via env_file).
+      - AITUNNEL_API_KEY=${AITUNNEL_API_KEY}
+      - AITUNNEL_BASE_URL=${AITUNNEL_BASE_URL}
+      - AITUNNEL_MODEL=${AITUNNEL_MODEL}
+      # Optional image model/size overrides
+      - IMAGE_MODEL=${IMAGE_MODEL:-gemini-3-pro-image-preview}
+      - IMAGE_SIZE=${IMAGE_SIZE:-1024x1536}
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        NEXT_PUBLIC_SUPPORT_EMAIL: ${NEXT_PUBLIC_SUPPORT_EMAIL:-hello@visulit.com}
+    depends_on:
+      - flask
+    environment:
+      - FLASK_INTERNAL_URL=http://flask:5000
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    depends_on:
+      - frontend
+    environment:
+      - DOMAIN=${DOMAIN}
+      - CADDY_EMAIL=${CADDY_EMAIL}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:
+

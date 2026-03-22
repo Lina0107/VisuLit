@@ -1,0 +1,11 @@
+.git
+frontend/node_modules
+frontend/.next
+frontend/.turbo
+**/*.log
+data/history.json
+data/usage.json
+data/characters.json
+data/books.json
+data/curated_books.json
+

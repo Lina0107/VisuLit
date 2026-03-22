@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VisuLit — bring literary characters to life</title>
+  <style>
+    :root {
+      --bg: #faf7f4;
+      --bg2: #f3ede8;
+      --card: #ffffff;
+      --border: rgba(180,130,110,0.15);
+      --border2: rgba(180,130,110,0.28);
+      --ink: #1e1410;
+      --muted: #6b5044;
+      --accent: #b85c38;
+      --accent2: #8c3e26;
+      --accentL: #fdf0ea;
+      --gold: #c9933a;
+      --shadow: 0 24px 64px rgba(120,60,30,0.10);
+      --shadow2: 0 8px 28px rgba(120,60,30,0.08);
+      --r: 20px;
+      --rS: 12px;
+      --t: 0.18s ease;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ========== VIEWS ========== */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ========== HERO ========== */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px 60px;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 20%, rgba(200,120,60,0.08) 0%, transparent 70%),
+        var(--bg);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background:
+        url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 2 L30 58 M2 30 L58 30' stroke='rgba(180,130,90,0.05)' stroke-width='1'/%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+
+    .hero-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 48px;
+    }
+    .hero-logo {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--accent), var(--gold));
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 24px rgba(180,90,40,0.22);
+    }
+    .hero-logo svg { width: 24px; height: 24px; }
+    .hero-brand-name {
+      font-family: ui-serif, Georgia, serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--ink);
+    }
+    .hero-brand-name span { color: var(--accent); }
+
+    /* Character animation */
+    .char-anim-wrap {
+      position: relative;
+      width: 200px; height: 260px;
+      margin: 0 auto 36px;
+    }
+    .char-silhouette {
+      width: 100%; height: 100%;
+      animation: floatChar 6s ease-in-out infinite;
+    }
+    .char-glow {
+      position: absolute;
+      bottom: -20px; left: 50%;
+      transform: translateX(-50%);
+      width: 120px; height: 30px;
+      background: radial-gradient(ellipse, rgba(180,90,40,0.18), transparent 70%);
+      border-radius: 50%;
+      animation: glowPulse 6s ease-in-out infinite;
+    }
+    @keyframes floatChar {
+      0%,100% { transform: translateY(0px) rotate(-1deg); }
+      50% { transform: translateY(-14px) rotate(1deg); }
+    }
+    @keyframes glowPulse {
+      0%,100% { opacity: 0.8; transform: translateX(-50%) scaleX(1); }
+      50% { opacity: 0.4; transform: translateX(-50%) scaleX(0.85); }
+    }
+
+    .hero-title {
+      font-family: ui-serif, Georgia, serif;
+      font-size: clamp(32px, 6vw, 58px);
+      font-weight: 800;
+      line-height: 1.15;
+      color: var(--ink);
+      max-width: 680px;
+      margin-bottom: 18px;
+    }
+    .hero-title span { color: var(--accent); }
+    .hero-sub {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 480px;
+      line-height: 1.6;
+      margin-bottom: 36px;
+    }
+    .hero-cta {
+      display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+    }
+
+    /* ========== BUTTONS ========== */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 26px;
+      border-radius: var(--r);
+      font-size: 15px; font-weight: 600;
+      cursor: pointer; border: none;
+      transition: var(--t);
+      text-decoration: none;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--gold));
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(180,90,40,0.28);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(180,90,40,0.36); }
+    .btn-secondary {
+      background: var(--card);
+      color: var(--ink);
+      border: 1px solid var(--border2);
+    }
+    .btn-secondary:hover { background: var(--bg2); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .btn-ghost:hover { color: var(--ink); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+    /* ========== SAMPLES ========== */
+    .samples {
+      width: 100%;
+      max-width: 940px;
+      margin: 56px auto 0;
+    }
+    .samples-label {
+      text-align: center;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+    .samples-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 14px;
+    }
+    .sample-card {
+      background: var(--card);
+      border-radius: var(--r);
+      padding: 20px 16px 16px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow2);
+      text-align: center;
+      cursor: pointer;
+      transition: var(--t);
+    }
+    .sample-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+    .sample-avatar {
+      width: 72px; height: 90px;
+      margin: 0 auto 12px;
+    }
+    .sample-name { font-weight: 700; font-size: 14px; color: var(--ink); }
+    .sample-book { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* ========== POPULAR BOOKS ========== */
+    .pop-section {
+      width: 100%; max-width: 940px; margin: 56px auto 0;
+    }
+    .section-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-family: ui-serif, Georgia, serif;
+      font-size: 22px; font-weight: 700; color: var(--ink);
+    }
+    .books-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+    }
+    .book-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 18px 16px;
+      cursor: pointer;
+      transition: var(--t);
+      position: relative;
+      overflow: hidden;
+    }
+    .book-card::before {
+      content: "";
+      position: absolute; top: 0; left: 0;
+      width: 4px; height: 100%;
+      background: linear-gradient(to bottom, var(--accent), var(--gold));
+      opacity: 0;
+      transition: var(--t);
+    }
+    .book-card:hover { transform: translateY(-3px); box-shadow: var(--shadow2); }
+    .book-card:hover::before { opacity: 1; }
+    .book-title { font-weight: 700; font-size: 13px; line-height: 1.4; color: var(--ink); }
+    .book-author { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .book-action {
+      display: block; margin-top: 10px;
+      font-size: 11px; color: var(--accent); font-weight: 600;
+    }
+
+    /* ========== BOOK VIEW ========== */
+    .book-view {
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse 70% 50% at 0% 0%, rgba(200,120,60,0.06), transparent 60%),
+        var(--bg);
+    }
+    .bv-header {
+      padding: 18px 28px;
+      display: flex; align-items: center; gap: 16px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .bv-brand {
+      font-family: ui-serif, Georgia, serif;
+      font-weight: 700; font-size: 16px; color: var(--ink);
+    }
+    .bv-brand span { color: var(--accent); }
+    .bv-title { font-size: 14px; color: var(--muted); flex: 1; }
+
+    .bv-body {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 24px;
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 760px) { .bv-body { grid-template-columns: 1fr; } }
+
+    /* Panel */
+    .panel {
+      background: var(--card);
+      border-radius: var(--r);
+      padding: 24px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow2);
+    }
+    .panel h2 {
+      font-family: ui-serif, Georgia, serif;
+      font-size: 18px; font-weight: 700;
+      color: var(--ink); margin-bottom: 6px;
+    }
+    .panel > p { font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
+
+    label {
+      display: block;
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--muted); margin-top: 16px; margin-bottom: 6px;
+    }
+    select, input[type="text"], textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: var(--rS);
+      border: 1px solid var(--border2);
+      background: var(--bg);
+      color: var(--ink);
+      font-size: 14px;
+      outline: none;
+      transition: var(--t);
+    }
+    select:focus, input:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(184,92,56,0.10);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
+
+    .chip {
+      display: inline-block;
+      padding: 4px 10px; border-radius: 99px;
+      font-size: 11px; font-weight: 600;
+      background: var(--accentL); color: var(--accent);
+    }
+
+    .msg-ok { font-size: 13px; color: #16803c; margin-top: 8px; }
+    .msg-err { font-size: 13px; color: #c0392b; margin-top: 8px; }
+    .msg-info { font-size: 13px; color: var(--muted); margin-top: 8px; }
+
+    .progress-wrap {
+      height: 4px; background: var(--border); border-radius: 99px; overflow: hidden;
+      margin-top: 10px; display: none;
+    }
+    .progress-bar {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--gold));
+      border-radius: 99px;
+      transition: width 0.4s ease;
+    }
+
+    /* ========== ADD CHARACTER BLOCK ========== */
+    .add-char-block {
+      margin-top: 20px; padding-top: 18px;
+      border-top: 1px solid var(--border);
+      display: none;
+    }
+    .add-char-block .block-title {
+      font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 4px;
+    }
+    .add-char-block .block-sub {
+      font-size: 12px; color: var(--muted); margin-bottom: 10px; line-height: 1.5;
+    }
+    .add-char-inline {
+      display: flex; gap: 8px;
+    }
+    .add-char-inline input { flex: 1; }
+    .btn-add {
+      background: var(--accentL);
+      color: var(--accent);
+      border: 1px solid rgba(184,92,56,0.2);
+      padding: 10px 16px;
+      border-radius: var(--rS);
+      font-size: 13px; font-weight: 700;
+      cursor: pointer; white-space: nowrap;
+      transition: var(--t);
+    }
+    .btn-add:hover { background: var(--accent); color: #fff; }
+    .btn-add:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ========== CHARACTER OPTION ========== */
+    .char-badge {
+      display: inline-block; padding: 2px 7px;
+      border-radius: 6px; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      background: #e8f5e9; color: #2e7d32; margin-left: 6px;
+    }
+    .char-badge.added { background: var(--accentL); color: var(--accent); }
+
+    /* ========== QUOTES ========== */
+    .quotes-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+    .quote-card {
+      background: var(--bg2);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 var(--rS) var(--rS) 0;
+      padding: 12px 14px;
+    }
+    .quote-text {
+      font-size: 13px; line-height: 1.6; color: var(--ink);
+      font-style: italic;
+    }
+    .quote-loc {
+      font-size: 11px; color: var(--muted); margin-top: 5px;
+      text-transform: uppercase; letter-spacing: 0.07em; font-weight: 600;
+    }
+    .quotes-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--muted); margin-top: 16px; margin-bottom: 6px;
+    }
+    .no-quotes { font-size: 13px; color: var(--muted); padding: 12px 0; }
+
+    /* ========== IMAGE RESULT ========== */
+    .img-box {
+      background: var(--bg2);
+      border-radius: var(--r);
+      padding: 20px;
+      margin-top: 16px;
+      border: 1px solid var(--border);
+      display: none;
+    }
+    .img-box pre {
+      font-size: 12px; white-space: pre-wrap; word-break: break-word;
+      color: var(--muted); line-height: 1.6;
+    }
+    .img-box .img-cap {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--muted); margin-bottom: 10px;
+    }
+
+    /* ========== HISTORY ========== */
+    .history-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+    .history-item {
+      background: var(--bg2);
+      border-radius: var(--rS);
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: var(--t);
+    }
+    .history-item:hover { background: var(--border); }
+    .history-item .h-name { font-size: 13px; font-weight: 700; color: var(--ink); }
+    .history-item .h-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* ========== SEARCH BAR ========== */
+    .search-bar {
+      display: flex; gap: 10px; align-items: center;
+      max-width: 560px; margin: 0 auto 40px;
+    }
+    .search-bar input {
+      flex: 1;
+      padding: 14px 18px;
+      border-radius: 99px;
+      border: 1.5px solid var(--border2);
+      background: var(--card);
+      font-size: 15px;
+      box-shadow: var(--shadow2);
+    }
+
+    /* ========== SCROLLBAR ========== */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+
+    /* ========== BOOK SEARCH MODAL STYLE ========== */
+    .search-results {
+      position: absolute; top: 100%; left: 0; right: 0;
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      max-height: 320px; overflow-y: auto;
+      z-index: 100;
+    }
+    .search-results .sr-item {
+      padding: 12px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: var(--t);
+    }
+    .search-results .sr-item:last-child { border-bottom: none; }
+    .search-results .sr-item:hover { background: var(--accentL); }
+    .sr-name { font-weight: 700; font-size: 13px; color: var(--ink); }
+    .sr-author { font-size: 12px; color: var(--muted); }
+    .search-rel { position: relative; flex: 1; }
+
+    .book-list-in-view {
+      max-height: 280px;
+      overflow-y: auto;
+      margin-top: 8px;
+      padding: 4px 0;
+      border: 1px solid var(--border);
+      border-radius: var(--rS);
+      background: var(--bg);
+    }
+    .book-list-in-view .bl-item {
+      padding: 10px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: var(--t);
+    }
+    .book-list-in-view .bl-item:last-child { border-bottom: none; }
+    .book-list-in-view .bl-item:hover { background: var(--accentL); }
+    .book-list-in-view .bl-item .bl-title { font-weight: 700; font-size: 12px; color: var(--ink); }
+    .book-list-in-view .bl-item .bl-author { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .custom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 560px) { .custom-grid { grid-template-columns: 1fr; } }
+
+    footer {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<!-- ========== LANDING VIEW ========== -->
+<div class="view active" id="landingView">
+  <div class="hero">
+    <div class="hero-brand">
+      <div class="hero-logo">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 6C4 4.9 4.9 4 6 4h5v16H6c-1.1 0-2-.9-2-2V6z" fill="rgba(255,255,255,0.5)"/>
+          <path d="M11 4h3c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2h-3V4z" fill="white"/>
+          <path d="M7 9h2M7 12h2M7 15h2" stroke="rgba(180,90,40,0.6)" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="hero-brand-name">Visu<span>Lit</span></div>
+    </div>
+
+    <!-- Animated Character Silhouette -->
+    <div class="char-anim-wrap">
+      <svg class="char-silhouette" viewBox="0 0 200 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Body / dress -->
+        <ellipse cx="100" cy="195" rx="52" ry="58" fill="url(#bodyGrad)" opacity="0.9"/>
+        <!-- Dress detail -->
+        <ellipse cx="100" cy="200" rx="44" ry="52" fill="url(#dressInner)" opacity="0.6"/>
+        <!-- Waist -->
+        <ellipse cx="100" cy="148" rx="20" ry="12" fill="url(#bodyGrad)" opacity="0.85"/>
+        <!-- Head -->
+        <ellipse cx="100" cy="96" rx="28" ry="32" fill="url(#headGrad)"/>
+        <!-- Hair — long, flowing -->
+        <path d="M72 88 Q56 120 60 160 Q68 155 74 148 Q70 120 80 100" fill="url(#hairGrad)" opacity="0.9"/>
+        <path d="M128 88 Q144 120 140 160 Q132 155 126 148 Q130 120 120 100" fill="url(#hairGrad)" opacity="0.9"/>
+        <!-- Top of hair -->
+        <ellipse cx="100" cy="72" rx="30" ry="14" fill="url(#hairGrad)"/>
+        <!-- Neck -->
+        <rect x="93" y="124" width="14" height="18" rx="7" fill="url(#headGrad)"/>
+        <!-- Collar / neckline -->
+        <path d="M82 142 Q100 152 118 142" stroke="rgba(180,90,40,0.3)" stroke-width="2" fill="none"/>
+        <!-- Book in hands -->
+        <rect x="76" y="162" width="48" height="34" rx="4" fill="url(#bookGrad)" opacity="0.95"/>
+        <line x1="100" y1="162" x2="100" y2="196" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/>
+        <line x1="82" y1="168" x2="98" y2="168" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+        <line x1="82" y1="173" x2="98" y2="173" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+        <line x1="82" y1="178" x2="98" y2="178" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+        <line x1="102" y1="168" x2="118" y2="168" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+        <line x1="102" y1="173" x2="118" y2="173" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+        <!-- Face features -->
+        <ellipse cx="91" cy="97" rx="4" ry="5" fill="rgba(100,60,40,0.3)"/>
+        <ellipse cx="109" cy="97" rx="4" ry="5" fill="rgba(100,60,40,0.3)"/>
+        <path d="M94 112 Q100 117 106 112" stroke="rgba(180,90,40,0.4)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <!-- Stars / sparkles -->
+        <path d="M38 60 L40 56 L42 60 L46 62 L42 64 L40 68 L38 64 L34 62 Z" fill="rgba(201,147,58,0.5)" opacity="0.8"/>
+        <path d="M158 40 L160 36 L162 40 L166 42 L162 44 L160 48 L158 44 L154 42 Z" fill="rgba(184,92,56,0.4)" opacity="0.7"/>
+        <path d="M168 130 L169.5 127 L171 130 L174 131.5 L171 133 L169.5 136 L168 133 L165 131.5 Z" fill="rgba(201,147,58,0.5)" opacity="0.6"/>
+        <defs>
+          <linearGradient id="bodyGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#e8c4b0"/>
+            <stop offset="100%" stop-color="#c4876a"/>
+          </linearGradient>
+          <linearGradient id="dressInner" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#d4a080"/>
+            <stop offset="100%" stop-color="#b86848"/>
+          </linearGradient>
+          <linearGradient id="headGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f5ddd0"/>
+            <stop offset="100%" stop-color="#e8c4b0"/>
+          </linearGradient>
+          <linearGradient id="hairGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#6b3c28"/>
+            <stop offset="100%" stop-color="#3d2018"/>
+          </linearGradient>
+          <linearGradient id="bookGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#b85c38"/>
+            <stop offset="100%" stop-color="#8c3e26"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="char-glow"></div>
+    </div>
+
+    <h1 class="hero-title">Bring your favourite<br><span>characters to life</span></h1>
+    <p class="hero-sub">AI portraits of literary characters — built from the author's own words. Enter a book title and we'll find appearance quotes straight from the text.</p>
+
+    <div class="hero-cta">
+      <button class="btn btn-primary" id="heroFindBtn">
+        <svg viewBox="0 0 20 20" fill="none" width="18"><circle cx="9" cy="9" r="6" stroke="white" stroke-width="1.8"/><path d="M14 14l3 3" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        Find characters
+      </button>
+      <button class="btn btn-secondary" id="heroCustomBtn">Your own character</button>
+    </div>
+
+    <!-- Samples -->
+    <div class="samples">
+      <div class="samples-label">Visualisation examples</div>
+      <div class="samples-grid" id="samplesGrid"></div>
+    </div>
+
+    <!-- Popular books -->
+    <div class="pop-section">
+      <div class="section-head">
+        <div class="section-title">Popular books</div>
+      </div>
+      <div class="books-grid" id="popularGrid"></div>
+    </div>
+  </div>
+
+  <!-- How it works -->
+  <div style="max-width:760px; margin: 0 auto; padding: 60px 24px;">
+    <div style="text-align:center; margin-bottom:40px;">
+      <div class="section-title" style="font-size:28px;" id="howItWorks">How it works</div>
+      <p style="color:var(--muted); margin-top:12px; font-size:15px;">Three simple steps to your character portrait</p>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:20px;">
+      <div class="panel" style="text-align:center;">
+        <div style="font-size:32px; margin-bottom:12px;">📖</div>
+        <div style="font-weight:700; margin-bottom:8px;">Choose a book</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.5;">Search by title — we'll find the book in our catalogue and extract the characters.</div>
+      </div>
+      <div class="panel" style="text-align:center;">
+        <div style="font-size:32px; margin-bottom:12px;">✨</div>
+        <div style="font-weight:700; margin-bottom:8px;">AI extracts quotes</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.5;">We analyse the original text: eyes, hair, clothes — only real descriptions by the author.</div>
+      </div>
+      <div class="panel" style="text-align:center;">
+        <div style="font-size:32px; margin-bottom:12px;">🎨</div>
+        <div style="font-weight:700; margin-bottom:8px;">Portrait ready</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.5;">We generate the image from the quotes — exactly as the author described the character.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>VisuLit &nbsp;·&nbsp; <a href="#howItWorks" onclick="document.getElementById('howItWorks').scrollIntoView({behavior:'smooth'});return false;">How it works</a> &nbsp;·&nbsp; <a href="mailto:hello@visulit.com?subject=VisuLit%20support">hello@visulit.com</a></p>
+  </footer>
+</div>
+
+<!-- ========== BOOK VIEW ========== -->
+<div class="view" id="bookView">
+  <div class="bv-header">
+    <button class="btn btn-ghost" id="backBtn">← Back</button>
+    <div class="bv-brand">Visu<span>Lit</span></div>
+    <div class="bv-title" id="bvTitle"></div>
+  </div>
+
+  <div class="bv-body">
+    <!-- Left panel -->
+    <div>
+      <div class="panel">
+        <h2>Book selection</h2>
+        <p>Search for a book and click "Prepare" — first run takes 20–60 s, results are cached.</p>
+
+        <label>Search by title</label>
+        <div class="search-rel">
+          <input type="text" id="bookSearchInput" placeholder="e.g. Pride and Prejudice…" autocomplete="off"/>
+          <div class="search-results" id="bookSearchResults" style="display:none;"></div>
+        </div>
+
+        <label style="margin-top:14px;">Or pick from the list</label>
+        <div class="book-list-in-view" id="bookListInView">
+          <div class="msg-info">Loading books…</div>
+        </div>
+
+        <input type="hidden" id="bookIdHidden"/>
+
+        <input type="hidden" id="mainLimit" value="18"/>
+
+        <div class="toolbar">
+          <button class="btn btn-primary" id="prepareBtn">
+            <svg viewBox="0 0 20 20" fill="none" width="17"><path d="M3 10a7 7 0 1011.9 4.9" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/><path d="M9.5 4.5L11.5 6l-2 1.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Prepare book
+          </button>
+          <button class="btn btn-secondary" id="refreshBtn">Refresh</button>
+        </div>
+
+        <div class="progress-wrap" id="progressWrap"><div class="progress-bar" id="progressBar"></div></div>
+        <div class="msg-info" id="prepareStatus"></div>
+        <div class="msg-err" id="prepareError"></div>
+
+        <label>Characters</label>
+        <select id="charSelect">
+          <option value="">— Select a character —</option>
+        </select>
+        <div class="msg-info" id="charHint">No characters yet — click "Prepare book".</div>
+
+        <!-- Add character block -->
+        <div class="add-char-block" id="addCharBlock">
+          <div class="block-title">🔍 Missing a character?</div>
+          <div class="block-sub">Enter a character's name from this book — we'll pull appearance quotes from the text and add them to the list.</div>
+          <div class="add-char-inline">
+            <input type="text" id="addCharName" placeholder="Character name…"/>
+            <button type="button" class="btn-add" id="addCharBtn">Add</button>
+          </div>
+          <div class="msg-ok" id="addCharOk" style="display:none;"></div>
+          <div class="msg-err" id="addCharErr" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right panel -->
+    <div>
+      <div class="panel">
+        <h2>Quotes &amp; portrait</h2>
+        <p>Appearance quotes straight from the book text — the more detail, the more accurate the portrait.</p>
+
+        <div id="charDetails">
+          <div class="no-quotes">Select a character on the left to see their quotes.</div>
+        </div>
+
+        <label style="margin-top:20px;">Prompt (optional)</label>
+        <textarea id="descInput" placeholder="Leave empty — we'll build it automatically from the quotes…"></textarea>
+
+        <div class="toolbar">
+          <button class="btn btn-primary" id="genBtn">
+            <svg viewBox="0 0 20 20" fill="none" width="17"><rect x="3" y="3" width="14" height="14" rx="4" stroke="white" stroke-width="1.7"/><path d="M7 10l2 2 4-4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Generate portrait
+          </button>
+        </div>
+        <div class="msg-ok" id="genStatus"></div>
+        <div class="msg-err" id="genError"></div>
+
+        <div class="img-box" id="imgBox">
+          <div class="img-cap">Generation prompt</div>
+          <pre id="mockOut"></pre>
+        </div>
+      </div>
+
+      <!-- History -->
+      <div class="panel" style="margin-top:20px;">
+        <h2>Your history</h2>
+        <div class="history-list" id="historyList">
+          <div class="msg-info">No generations yet.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== CUSTOM CHARACTER VIEW ========== -->
+<div class="view" id="customView">
+  <div class="bv-header">
+    <button class="btn btn-ghost" id="backFromCustomBtn">← Back</button>
+    <div class="bv-brand">Visu<span>Lit</span></div>
+    <div class="bv-title">Create your own character</div>
+  </div>
+  <div style="max-width: 640px; margin: 0 auto; padding: 32px 24px;">
+    <div class="panel">
+      <h2>Your own character</h2>
+      <p>Describe your character — name, look, era. We'll build a portrait prompt from your description.</p>
+
+      <div class="custom-grid">
+        <div>
+          <label>Name</label>
+          <input type="text" id="cName" placeholder="e.g. Elara"/>
+        </div>
+        <div>
+          <label>Age</label>
+          <select id="cAge">
+            <option value="">—</option>
+            <option value="Child">Child</option>
+            <option value="Teen">Teen</option>
+            <option value="Young adult">Young adult</option>
+            <option value="Adult">Adult</option>
+            <option value="Middle-aged">Middle-aged</option>
+            <option value="Elder">Elder</option>
+          </select>
+        </div>
+      </div>
+      <div class="custom-grid">
+        <div>
+          <label>Era / setting</label>
+          <select id="cEra">
+            <option value="">—</option>
+            <option value="Regency / 1800s">Regency / 1800s</option>
+            <option value="Victorian / 1800s">Victorian / 1800s</option>
+            <option value="Early 1900s">Early 1900s</option>
+            <option value="Modern">Modern</option>
+            <option value="Fantasy">Fantasy</option>
+          </select>
+        </div>
+        <div>
+          <label>Vibe</label>
+          <input type="text" id="cVibe" placeholder="e.g. mysterious, gentle"/>
+        </div>
+      </div>
+      <label>Hair</label>
+      <input type="text" id="cHair" placeholder="e.g. long dark curls, red braids"/>
+      <label>Eyes</label>
+      <input type="text" id="cEyes" placeholder="e.g. green, piercing"/>
+      <label>Skin / complexion</label>
+      <input type="text" id="cSkin" placeholder="e.g. pale, freckled"/>
+      <label>Build</label>
+      <input type="text" id="cBuild" placeholder="e.g. tall, slender"/>
+      <label>Clothing</label>
+      <input type="text" id="cClothes" placeholder="e.g. velvet coat, lace collar"/>
+      <label>Extra notes</label>
+      <textarea id="cExtra" rows="2" placeholder="Anything else…"></textarea>
+
+      <div class="toolbar" style="margin-top:20px;">
+        <button class="btn btn-secondary" id="cBuildPromptBtn">Build prompt</button>
+        <button class="btn btn-primary" id="cGenBtn">Generate portrait</button>
+      </div>
+      <div class="msg-info" id="cStatus"></div>
+      <div class="msg-err" id="cError"></div>
+      <div class="img-box" id="cImgBox" style="margin-top:16px; display:none;">
+        <div class="img-cap">Prompt</div>
+        <pre id="cPromptOut"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ---- helpers ---- */
+  const el = id => document.getElementById(id);
+  const API = "/api";
+  const get = async url => { try { const r = await fetch(API + url); return { ok: r.ok, json: await r.json().catch(() => ({})) }; } catch(e) { return { ok: false, json: {} }; }};
+  const post = async (url, data) => { try { const r = await fetch(API + url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }); return { ok: r.ok, json: await r.json().catch(() => ({})) }; } catch(e) { return { ok: false, json: {} }; }};
+
+  /* ---- state ---- */
+  let allBooks = [];
+  let preparedCharacters = [];
+  let currentBookId = "";
+  let currentBookTitle = "";
+
+  /* ---- views ---- */
+  const showView = id => {
+    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    el(id).classList.add("active");
+    window.scrollTo(0, 0);
+  };
+
+  /* ---- sample data ---- */
+  const SAMPLES = [
+    { name: "Mr. Darcy", book: "Pride and Prejudice" },
+    { name: "Heathcliff", book: "Wuthering Heights" },
+    { name: "Count Dracula", book: "Dracula" },
+    { name: "Jane Eyre", book: "Jane Eyre" },
+    { name: "Jo March", book: "Little Women" },
+  ];
+
+  function drawSamples() {
+    const grid = el("samplesGrid");
+    grid.innerHTML = SAMPLES.map(s => `
+      <div class="sample-card">
+        <svg class="sample-avatar" viewBox="0 0 72 90" fill="none">
+          <ellipse cx="36" cy="68" rx="22" ry="24" fill="url(#sg1)" opacity=".85"/>
+          <ellipse cx="36" cy="33" rx="14" ry="16" fill="url(#sg2)"/>
+          <ellipse cx="36" cy="20" rx="15" ry="7" fill="url(#sg3)"/>
+          <rect x="31" y="47" width="10" height="10" rx="5" fill="url(#sg2)"/>
+          <defs>
+            <linearGradient id="sg1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e8c4b0"/><stop offset="1" stop-color="#c4876a"/></linearGradient>
+            <linearGradient id="sg2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f5ddd0"/><stop offset="1" stop-color="#e8c4b0"/></linearGradient>
+            <linearGradient id="sg3" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6b3c28"/><stop offset="1" stop-color="#3d2018"/></linearGradient>
+          </defs>
+        </svg>
+        <div class="sample-name">${s.name}</div>
+        <div class="sample-book">${s.book}</div>
+      </div>
+    `).join("");
+  }
+
+  /* ---- load books ---- */
+  async function loadBooks() {
+    const r = await get("/books?mode=curated&limit=200");
+    if (r.ok) allBooks = r.json.books || [];
+    drawPopular();
+    drawBookListInView();
+  }
+
+  function drawBookListInView() {
+    const container = el("bookListInView");
+    if (!container) return;
+    if (!allBooks.length) { container.innerHTML = '<div class="msg-info">No books loaded.</div>'; return; }
+    const slice = allBooks.slice(0, 36);
+    container.innerHTML = slice.map(b => `
+      <div class="bl-item" data-id="${b.book_id}">
+        <div class="bl-title">${(b.title || b.book_id).slice(0, 50)}${(b.title||"").length > 50 ? "…" : ""}</div>
+        <div class="bl-author">${(b.author || "").slice(0, 40)}</div>
+      </div>
+    `).join("");
+    container.querySelectorAll(".bl-item").forEach(item => {
+      item.addEventListener("click", () => openBook(item.dataset.id));
+    });
+  }
+
+  function drawPopular() {
+    const grid = el("popularGrid");
+    const pop = allBooks.slice(0, 12);
+    grid.innerHTML = pop.map(b => `
+      <div class="book-card" data-id="${b.book_id}">
+        <div class="book-title">${b.title || b.book_id}</div>
+        <div class="book-author">${b.author || ""}</div>
+        <span class="book-action">Find characters →</span>
+      </div>
+    `).join("");
+    grid.querySelectorAll(".book-card").forEach(c => {
+      c.addEventListener("click", () => openBook(c.dataset.id));
+    });
+  }
+
+  /* ---- open book ---- */
+  async function openBook(bookId) {
+    currentBookId = bookId;
+    const book = allBooks.find(b => b.book_id === bookId) || {};
+    currentBookTitle = book.title || bookId;
+    el("bvTitle").textContent = currentBookTitle;
+    el("bookSearchInput").value = currentBookTitle;
+    el("bookIdHidden").value = bookId;
+    el("bookSearchResults").style.display = "none";
+    showView("bookView");
+    await loadCharacters();
+    loadHistory();
+  }
+
+  /* ---- book search ---- */
+  let searchTimeout;
+  el("bookSearchInput").addEventListener("input", () => {
+    clearTimeout(searchTimeout);
+    const q = el("bookSearchInput").value.trim();
+    if (q.length < 2) { el("bookSearchResults").style.display = "none"; return; }
+    searchTimeout = setTimeout(() => showSearchResults(q), 260);
+  });
+
+  function showSearchResults(q) {
+    const ql = q.toLowerCase();
+    const matches = allBooks.filter(b => (b.title||"").toLowerCase().includes(ql) || (b.author||"").toLowerCase().includes(ql)).slice(0, 10);
+    if (!matches.length) { el("bookSearchResults").style.display = "none"; return; }
+    el("bookSearchResults").innerHTML = matches.map(b => `
+      <div class="sr-item" data-id="${b.book_id}">
+        <div class="sr-name">${b.title || b.book_id}</div>
+        <div class="sr-author">${b.author || ""}</div>
+      </div>
+    `).join("");
+    el("bookSearchResults").querySelectorAll(".sr-item").forEach(item => {
+      item.addEventListener("click", () => openBook(item.dataset.id));
+    });
+    el("bookSearchResults").style.display = "block";
+  }
+
+  document.addEventListener("click", e => {
+    if (!el("bookSearchResults").contains(e.target) && e.target !== el("bookSearchInput")) {
+      el("bookSearchResults").style.display = "none";
+    }
+  });
+
+  /* ---- load characters ---- */
+  async function loadCharacters() {
+    if (!currentBookId) return;
+    const r = await get("/characters?book_id=" + encodeURIComponent(currentBookId));
+    const chars = (r.json.characters || []).filter(c => c.role === "main");
+    preparedCharacters = chars;
+    renderCharList();
+  }
+
+  function renderCharList() {
+    const sel = el("charSelect");
+    sel.innerHTML = '<option value="">— Select a character —</option>';
+    preparedCharacters.forEach(c => {
+      const o = document.createElement("option");
+      o.value = c.character_id;
+      const badge = c.source === "user_added" ? " [+]" : "";
+      o.textContent = (c.character_name || "?") + badge;
+      sel.appendChild(o);
+    });
+    const n = preparedCharacters.length;
+    el("charHint").textContent = n ? `Found ${n} character${n === 1 ? "" : "s"}.` : "No characters yet — click \"Prepare book\".";
+    el("addCharBlock").style.display = n ? "block" : "none";
+  }
+
+  /* ---- prepare book ---- */
+  let prepareTimer;
+  el("prepareBtn").addEventListener("click", async () => {
+    if (!currentBookId) { el("prepareError").textContent = "Select a book first."; return; }
+    el("prepareError").textContent = "";
+    el("prepareStatus").textContent = "";
+    el("prepareBtn").disabled = true;
+    el("progressWrap").style.display = "block";
+    animateProgress();
+    el("prepareStatus").textContent = "Analysing book… this may take up to 60 seconds.";
+    const mainLimit = Number(el("mainLimit").value) || 18;
+    const r = await post("/prepare_book", { book_id: currentBookId, overwrite: false, main_limit: mainLimit });
+    clearInterval(prepareTimer);
+    el("progressBar").style.width = "100%";
+    setTimeout(() => { el("progressWrap").style.display = "none"; el("progressBar").style.width = "0%"; }, 600);
+    el("prepareBtn").disabled = false;
+    if (!r.ok || !r.json.success) { el("prepareError").textContent = r.json.error || "Preparation failed."; el("prepareStatus").textContent = ""; return; }
+    el("prepareStatus").textContent = r.json.cached ? "Loaded from cache." : "Done — characters saved.";
+    await loadCharacters();
+  });
+
+  function animateProgress() {
+    let pct = 0;
+    el("progressBar").style.width = "0%";
+    prepareTimer = setInterval(() => {
+      pct = pct < 85 ? pct + (Math.random() * 3) : pct + 0.2;
+      if (pct > 90) pct = 90;
+      el("progressBar").style.width = pct + "%";
+    }, 600);
+  }
+
+  el("refreshBtn").addEventListener("click", loadCharacters);
+
+  /* ---- character selection ---- */
+  el("charSelect").addEventListener("change", () => {
+    const id = el("charSelect").value;
+    const c = preparedCharacters.find(x => x.character_id === id);
+    renderCharDetails(c);
+  });
+
+  function renderCharDetails(c) {
+    if (!c) { el("charDetails").innerHTML = '<div class="no-quotes">Select a character on the left to see their quotes.</div>'; return; }
+    const apq = c.appearance_quotes || [];
+    const evq = c.evidence_quotes || [];
+    let html = "";
+    if (apq.length) {
+      html += '<div class="quotes-label">✨ Appearance quotes</div><div class="quotes-list">';
+      apq.forEach(q => {
+        html += `<div class="quote-card"><div class="quote-text">"${(q.quote||"").replace(/"/g,"&quot;")}"</div><div class="quote-loc">${q.location||""}</div></div>`;
+      });
+      html += "</div>";
+    } else {
+      html += '<div class="no-quotes">No appearance quotes found.</div>';
+    }
+    if (evq.length) {
+      html += '<div class="quotes-label" style="margin-top:16px;">📌 Context (character mentions)</div><div class="quotes-list">';
+      evq.slice(0, 2).forEach(q => {
+        html += `<div class="quote-card" style="border-color:var(--gold);"><div class="quote-text">"${(q.quote||"").replace(/"/g,"&quot;")}"</div><div class="quote-loc">${q.location||""}</div></div>`;
+      });
+      html += "</div>";
+    }
+    el("charDetails").innerHTML = html;
+  }
+
+  /* ---- generate ---- */
+  el("genBtn").addEventListener("click", async () => {
+    const id = el("charSelect").value;
+    const c = preparedCharacters.find(x => x.character_id === id);
+    if (!c) { el("genError").textContent = "Select a character first."; return; }
+    el("genError").textContent = "";
+    el("genStatus").textContent = "Saving to history…";
+    el("genBtn").disabled = true;
+    const desc = el("descInput").value.trim();
+    const payload = { character_id: c.character_id, character_name: c.character_name, auto_description: !desc };
+    if (desc) payload.description = desc;
+    const r = await post("/generate", payload);
+    el("genBtn").disabled = false;
+    if (!r.ok || !r.json.success) { el("genError").textContent = r.json.error || "Error."; el("genStatus").textContent = ""; return; }
+    el("genStatus").textContent = "Prompt ready!";
+    el("imgBox").style.display = "block";
+    el("mockOut").textContent = r.json.image_url || "(prompt saved)";
+    loadHistory();
+  });
+
+  /* ---- add character ---- */
+  el("addCharBtn").addEventListener("click", async () => {
+    const name = (el("addCharName").value || "").trim();
+    if (!name) { showAddMsg("err", "Enter a character name."); return; }
+    if (!currentBookId) { showAddMsg("err", "Select a book first."); return; }
+    showAddMsg("ok", "");
+    showAddMsg("err", "");
+    el("addCharBtn").disabled = true;
+    el("addCharBtn").textContent = "Loading…";
+    const r = await post("/add_character", { book_id: currentBookId, character_name: name });
+    el("addCharBtn").disabled = false;
+    el("addCharBtn").textContent = "Add";
+    if (!r.ok || !r.json.success) { showAddMsg("err", r.json.error || "Error."); return; }
+    showAddMsg("ok", `✓ Added: ${r.json.character && r.json.character.character_name}`);
+    el("addCharName").value = "";
+    await loadCharacters();
+  });
+
+  function showAddMsg(type, text) {
+    const ok = el("addCharOk"); const err = el("addCharErr");
+    if (type === "ok") { ok.textContent = text; ok.style.display = text ? "block" : "none"; }
+    else { err.textContent = text; err.style.display = text ? "block" : "none"; }
+  }
+
+  /* ---- history ---- */
+  async function loadHistory() {
+    const r = await get("/history");
+    const items = (r.json.history || []).slice(0, 8);
+    const list = el("historyList");
+    if (!items.length) { list.innerHTML = '<div class="msg-info">No generations yet.</div>'; return; }
+    list.innerHTML = items.map(h => `
+      <div class="history-item">
+        <div class="h-name">${h.character_name || "?"}</div>
+        <div class="h-sub">${(h.description || "").slice(0, 80)}${(h.description||"").length > 80 ? "…" : ""}</div>
+      </div>
+    `).join("");
+  }
+
+  /* ---- nav ---- */
+  el("backBtn").addEventListener("click", () => showView("landingView"));
+  el("heroFindBtn").addEventListener("click", () => {
+    showView("bookView");
+    el("bvTitle").textContent = "Choose a book";
+    drawBookListInView();
+  });
+  el("heroCustomBtn").addEventListener("click", () => showView("customView"));
+  el("backFromCustomBtn").addEventListener("click", () => showView("landingView"));
+
+  /* ---- custom character ---- */
+  function buildCustomPrompt() {
+    const name = (el("cName").value || "").trim() || "Original character";
+    const age = (el("cAge").value || "").trim();
+    const era = (el("cEra").value || "").trim();
+    const vibe = (el("cVibe").value || "").trim();
+    const hair = (el("cHair").value || "").trim();
+    const eyes = (el("cEyes").value || "").trim();
+    const skin = (el("cSkin").value || "").trim();
+    const build = (el("cBuild").value || "").trim();
+    const clothes = (el("cClothes").value || "").trim();
+    const extra = (el("cExtra").value || "").trim();
+    const parts = [];
+    parts.push("Portrait of " + name + ".");
+    const basics = [];
+    if (age) basics.push(age.toLowerCase());
+    if (era) basics.push("setting: " + era);
+    if (vibe) basics.push("vibe: " + vibe);
+    if (basics.length) parts.push("Basics: " + basics.join(", ") + ".");
+    const look = [];
+    if (hair) look.push("hair: " + hair);
+    if (eyes) look.push("eyes: " + eyes);
+    if (skin) look.push("complexion: " + skin);
+    if (build) look.push("build: " + build);
+    if (look.length) parts.push("Appearance: " + look.join(", ") + ".");
+    if (clothes) parts.push("Clothing: " + clothes + ".");
+    if (extra) parts.push("Notes: " + extra + ".");
+    parts.push("Style: tasteful literary portrait, soft lighting, neutral background.");
+    return parts.join(" ");
+  }
+
+  el("cBuildPromptBtn").addEventListener("click", () => {
+    const prompt = buildCustomPrompt();
+    el("cPromptOut").textContent = prompt;
+    el("cImgBox").style.display = "block";
+    el("cError").textContent = "";
+    el("cStatus").textContent = "Prompt ready. Click \"Generate portrait\" to save to history.";
+  });
+
+  el("cGenBtn").addEventListener("click", async () => {
+    const name = (el("cName").value || "").trim() || "Original character";
+    const prompt = buildCustomPrompt();
+    el("cError").textContent = "";
+    el("cStatus").textContent = "Saving to history…";
+    el("cGenBtn").disabled = true;
+    const r = await post("/generate", { character_name: name, description: prompt });
+    el("cGenBtn").disabled = false;
+    if (!r.ok || !r.json.success) {
+      el("cError").textContent = r.json.error || "Error.";
+      el("cStatus").textContent = "";
+      return;
+    }
+    el("cStatus").textContent = "Saved to your history.";
+    el("cPromptOut").textContent = prompt;
+    el("cImgBox").style.display = "block";
+  });
+
+  /* ---- init ---- */
+  drawSamples();
+  loadBooks();
+</script>
+</body>
+</html>

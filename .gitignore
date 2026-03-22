@@ -1,0 +1,16 @@
+# Environment and secrets (never commit)
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.Python
+
+# OS
+.DS_Store
+Thumbs.db

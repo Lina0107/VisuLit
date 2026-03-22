@@ -1,0 +1,8 @@
+{
+  email {env.CADDY_EMAIL}
+}
+
+{env.DOMAIN} {
+  reverse_proxy frontend:3000
+}
+
