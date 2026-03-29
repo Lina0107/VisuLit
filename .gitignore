@@ -14,3 +14,10 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local deploy bundle (use scp to server, do not commit)
+visulit-deploy.tar.gz
+
+# Node / Next (if running tooling from repo root)
+frontend/node_modules/
+frontend/.next/

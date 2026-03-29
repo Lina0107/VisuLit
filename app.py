@@ -30,7 +30,7 @@ CHARACTERS_FILE = os.path.join(DATA_DIR, "characters.json")
 USAGE_FILE = os.path.join(DATA_DIR, "usage.json")
 HISTORY_FILE = os.path.join(DATA_DIR, "history.json")
 
-DAILY_FREE_LIMIT = 3
+DAILY_FREE_LIMIT = 5
 
 AITUNNEL_API_KEY = os.getenv("AITUNNEL_API_KEY", "").strip()
 AITUNNEL_BASE_URL = os.getenv("AITUNNEL_BASE_URL", "https://api.aitunnel.ru/v1").strip()
@@ -507,9 +507,44 @@ def prepare_main_characters(book_title: str, full_text: str, raw_candidates, mai
     )
 
     obj = _safe_json_from_model(content)
-    for ch in obj.get("main_characters", []):
-        ch.setdefault("evidence_quotes", [])
-        ch.setdefault("appearance_quotes", [])
+
+    # Be tolerant to occasional malformed model output:
+    # - top-level list instead of {"main_characters":[...]}
+    # - list items that are not dicts
+    if isinstance(obj, list):
+        obj = {"main_characters": obj}
+    if not isinstance(obj, dict):
+        raise RuntimeError("Bad GPT response format: expected object or list")
+
+    raw_chars = obj.get("main_characters", [])
+    if isinstance(raw_chars, dict):
+        raw_chars = [raw_chars]
+    if not isinstance(raw_chars, list):
+        raw_chars = []
+
+    normalized = []
+    for ch in raw_chars:
+        if not isinstance(ch, dict):
+            continue
+        canonical = str(ch.get("canonical_name") or "").strip()
+        aliases = ch.get("aliases") or []
+        if isinstance(aliases, str):
+            aliases = [aliases]
+        if not isinstance(aliases, list):
+            aliases = []
+        aliases = [str(a).strip() for a in aliases if str(a).strip()]
+        if canonical and canonical not in aliases:
+            aliases.insert(0, canonical)
+        if not canonical:
+            continue
+        normalized.append({
+            "canonical_name": canonical,
+            "aliases": aliases,
+            "evidence_quotes": [],
+            "appearance_quotes": [],
+        })
+
+    obj["main_characters"] = normalized[: max(1, int(main_limit))]
     return obj
 
 
@@ -1115,7 +1150,12 @@ def build_auto_description_from_character(book: dict, character: dict, max_quote
         quotes_part = f" Use these lines as a guide to appearance and clothing: {merged}."
 
     # soft global style hint (can be overridden on the client side if needed)
-    style_hint = " Illustration, detailed character design, focus on face, body and clothing, neutral background."
+    style_hint = (
+        " Photorealistic portrait of a real human being."
+        " Cinematic soft natural lighting, sharp focus on face and eyes."
+        " Detailed skin texture, realistic hair, period-appropriate clothing."
+        " Neutral painterly background, no cartoonish or illustrated look."
+    )
 
     return header + "." + quotes_part + style_hint
 
@@ -1181,6 +1221,21 @@ def api_history():
     return jsonify({"success": True, "history": sanitized})
 
 
+def _book_matches_query(query_lower: str, book: dict) -> bool:
+    """Substring on title/author, or all significant tokens present (e.g. 'war peace' → War and Peace)."""
+    if not query_lower:
+        return True
+    t = (book.get("title") or "").lower()
+    a = (book.get("author") or "").lower()
+    combined = f"{t} {a}"
+    if query_lower in t or query_lower in a:
+        return True
+    parts = [p for p in query_lower.split() if len(p) >= 2]
+    if len(parts) >= 2:
+        return all(p in combined for p in parts)
+    return False
+
+
 @app.route("/api/books", methods=["GET"])
 def api_books():
     query = (request.args.get("query") or "").strip().lower()
@@ -1218,9 +1273,33 @@ def api_books():
             result = sorted(result, key=lambda b: (b.get("title") or "").lower())
 
     if query:
-        result = [b for b in result if query in (b.get("title") or "").lower() or query in (b.get("author") or "").lower()]
+        filtered = [b for b in result if _book_matches_query(query, b)]
+        if not filtered and mode == "curated":
+            extra = []
+            seen = set()
+            for full in all_books:
+                bid = full.get("book_id")
+                if not bid or bid in seen or not full.get("text_url"):
+                    continue
+                if not _book_matches_query(query, full):
+                    continue
+                seen.add(bid)
+                extra.append({
+                    "book_id": bid,
+                    "title": full.get("title"),
+                    "author": full.get("author"),
+                    "year": full.get("year"),
+                    "source": full.get("source") or "gutenberg",
+                    "text_url": full.get("text_url"),
+                    "popularity_score": int(full.get("download_count") or 0),
+                })
+            extra.sort(key=lambda b: (b.get("popularity_score", 0), (b.get("title") or "")), reverse=True)
+            result = extra[:limit]
+        else:
+            result = filtered[:limit]
+    else:
+        result = result[:limit]
 
-    result = result[:limit]
     return jsonify({"success": True, "books": result, "count": len(result)})
 
 
@@ -1285,6 +1364,7 @@ def api_prepare_book():
         r.raise_for_status()
         text = r.text
     except Exception as e:
+        app.logger.exception("prepare_book: failed to download text for book_id=%s", book_id)
         return jsonify({"success": False, "error": f"Failed to download text: {str(e)}"}), 500
 
     # candidates
@@ -1294,6 +1374,7 @@ def api_prepare_book():
     try:
         preparedA = prepare_main_characters(book.get("title", ""), text, raw, main_limit=main_limit)
     except Exception as e:
+        app.logger.exception("prepare_book: GPT prepare failed for book_id=%s", book_id)
         return jsonify({"success": False, "error": f"GPT prepare failed: {str(e)}"}), 500
 
     main_chars = preparedA.get("main_characters", [])
@@ -1673,6 +1754,7 @@ def api_generate():
         img_resp.raise_for_status()
         img_data = img_resp.json()
     except Exception as e:
+        app.logger.exception("generate: image provider request failed for character_name=%s", character_name)
         return jsonify({"success": False, "error": f"Image generation failed: {type(e).__name__}: {str(e)}"}), 500
 
     # OpenAI-compatible response:
