@@ -22,7 +22,8 @@
 ### Non-obvious caveats
 
 - No database — all data is stored in JSON files under `data/`. The seed data (`books.json`, `curated_books.json`) is already committed.
-- The `.env` file must exist in the repo root for the Flask backend to read `AITUNNEL_*` vars. Without `AITUNNEL_API_KEY`, `prepare_book` and `generate` endpoints will fail, but all other endpoints (health, books, characters, usage, history) work fine.
+- The `.env` file must exist in the repo root for the Flask backend to read `AITUNNEL_*` vars. Without `AITUNNEL_API_KEY`, the `prepare_book` (POST, requires LLM) and `generate` (POST, requires image API) endpoints will fail, but all read endpoints work fine: `/api/health`, `/api/books`, `/api/characters`, `/api/usage`, `/api/history`. Previously prepared books (with cached characters in `data/characters.json`) remain browsable without the key.
+- If `AITUNNEL_API_KEY` is not available, you can still fully test the browsing flow: search books, view cached characters, check usage/history. The key is only needed for the LLM-powered prepare and image-generation features.
 - `import_books.py` is a one-time script to fetch books from Gutendex into `data/books.json` — only run if the file is missing or needs refreshing.
 - The frontend uses `package-lock.json` (npm), not pnpm or yarn.
 - Pre-existing ESLint errors (19 `@typescript-eslint/no-explicit-any` and `react/no-unescaped-entities`) are in the codebase; TypeScript compiles cleanly.
