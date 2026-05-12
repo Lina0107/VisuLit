@@ -610,7 +610,7 @@ def extract_evidence_quotes_from_text(full_text: str, characters: list, max_per_
 
 # -------------------- PREPARE STEP B: appearance candidates from full text --------------------
 APPEARANCE_BODY = [
-    "face", "features", "complexion", "countenance", "eyes", "hair", "locks", "brow", "cheek",
+    "face", "features", "complexion", "countenance", "eyes", "hair", "locks", "curl", "curls", "brow", "cheek",
     "cheeks", "lips", "mouth", "nose", "chin", "shoulders", "figure", "form", "body",
     "skin", "eyelashes", "eyebrows", "forehead", "jaw", "neck", "waist", "height", "stature"
 ]
@@ -632,7 +632,7 @@ APPEARANCE_KEYWORDS = APPEARANCE_BODY + APPEARANCE_ADJ + APPEARANCE_CLOTHES + AP
 
 # Features that indicate a CANONICAL (stable, portrait-worthy) description — not a situational moment
 CANONICAL_BODY_FEATURES = [
-    "eyes", "hair", "locks", "face", "features", "complexion", "countenance", "figure",
+    "eyes", "hair", "locks", "curl", "curls", "face", "features", "complexion", "countenance", "figure",
     "form", "stature", "height", "brow", "cheek", "cheeks", "lips", "forehead",
     "skin", "waist", "neck", "jaw"
 ]
@@ -837,6 +837,72 @@ def _book_location(offset: int, total: int):
     return "late"
 
 
+# Same figure often appears under alternate spellings / diminutives across chapters or translations.
+# If GPT keeps one form, appearance lines using another form are missed — merge common English variants.
+# Keep groups conservative (omit ambiguous shorts like "Beth" vs Elizabeth family).
+LITERARY_NAME_VARIANT_GROUPS = (
+    frozenset({"Natasha", "Nataly", "Natalia", "Natalie", "Natásha"}),
+    frozenset({"Elizabeth", "Eliza", "Lizzy", "Lizzie", "Elisabeth"}),
+    frozenset({"Catherine", "Cathy", "Kate", "Katherine", "Katharine", "Kitty"}),
+    frozenset({"Margaret", "Meg", "Maggie", "Peggy"}),
+    frozenset({"Frederick", "Fred", "Freddy"}),
+    frozenset({"Theodore", "Theo", "Ted"}),
+    frozenset({"William", "Will", "Willie", "Bill", "Billy"}),
+    frozenset({"Robert", "Bob", "Rob", "Bobby"}),
+    frozenset({"James", "Jim", "Jimmy", "Jamie"}),
+    frozenset({"John", "Jack", "Johnny"}),
+    frozenset({"Edward", "Ed", "Ned", "Teddy"}),
+    frozenset({"Alexander", "Alex", "Alec", "Sandy"}),
+    frozenset({"Henrietta", "Hetty", "Etta"}),
+    frozenset({"Frances", "Fanny"}),
+    frozenset({"Christiana", "Chris", "Christie"}),
+    frozenset({"Joseph", "Joe", "Joey"}),
+    frozenset({"Richard", "Dick", "Rick"}),
+    frozenset({"Charles", "Charlie", "Chuck"}),
+    frozenset({"Thomas", "Tom", "Tommy"}),
+    frozenset({"Michael", "Mike", "Mick"}),
+    frozenset({"Samuel", "Sam", "Sammy"}),
+    frozenset({"David", "Dave", "Davy"}),
+    frozenset({"Harry", "Harold", "Hal"}),
+    frozenset({"Anne", "Annie", "Nancy"}),
+    frozenset({"Mary", "Molly", "Polly", "Mae"}),
+    frozenset({"Sarah", "Sally", "Sadie"}),
+    frozenset({"Eleanor", "Ellen", "Nell", "Nellie"}),
+    frozenset({"Theresa", "Tess", "Tessa"}),
+    frozenset({"Victoria", "Vicky", "Toria"}),
+)
+
+
+def enrich_cross_spell_aliases(main_chars: list) -> None:
+    """
+    For each main character, if canonical name or any alias contains a token from a variant group,
+    append all spellings in that group so appearance/evidence scanners match alternate forms.
+    Applies to every book (not title-specific).
+    """
+    if not main_chars:
+        return
+    for ch in main_chars:
+        if not isinstance(ch, dict):
+            continue
+        canon = (ch.get("canonical_name") or "").strip()
+        aliases = [str(a).strip() for a in (ch.get("aliases") or []) if isinstance(a, str) and str(a).strip()]
+        blob = _normalize_for_match(f"{canon} {' '.join(aliases)}")
+        words = set(blob.split())
+        have = {normalize_name(x) for x in [canon] + aliases if x}
+        merged = list(aliases)
+        for group in LITERARY_NAME_VARIANT_GROUPS:
+            norms = {_normalize_for_match(g) for g in group}
+            norms.discard("")
+            if not words & norms:
+                continue
+            for g in group:
+                gn = normalize_name(g)
+                if gn and gn not in have:
+                    merged.append(g)
+                    have.add(gn)
+        ch["aliases"] = merged
+
+
 def _normalize_for_match(s: str) -> str:
     """
     Lowercase + strip diacritics + collapse punctuation/spaces.
@@ -895,13 +961,19 @@ def build_appearance_candidates(full_text: str, characters, max_per_char=28):
         found = []
         seen_quotes = set()
 
-        # scan sentences, look for alias mention, then pick window (prev + this + next)
+        # Scan sentences: character may be named in an adjacent line while appearance uses only "she/her".
+        # So we anchor on any of (i-1, i, i+1) containing an alias, then take the 3-sentence window around i.
         for i, (sent, offset) in enumerate(sentences):
-            lower = _normalize_for_match(sent)
-            hit_alias = None
-            for p in alias_patterns:
-                if p.search(lower):
-                    hit_alias = True
+            hit_alias = False
+            for j in (i - 1, i, i + 1):
+                if not (0 <= j < len(sentences)):
+                    continue
+                sj = _normalize_for_match(sentences[j][0])
+                for p in alias_patterns:
+                    if p.search(sj):
+                        hit_alias = True
+                        break
+                if hit_alias:
                     break
             if not hit_alias:
                 continue
@@ -1559,6 +1631,8 @@ def api_prepare_book():
     main_chars = preparedA.get("main_characters", [])
     if not isinstance(main_chars, list):
         return jsonify({"success": False, "error": "Bad GPT response (main_characters)"}), 500
+
+    enrich_cross_spell_aliases(main_chars)
 
     # STEP A-b: evidence quotes from code (guaranteed to contain character name)
     evidence_map = extract_evidence_quotes_from_text(text, main_chars, max_per_char=4)
