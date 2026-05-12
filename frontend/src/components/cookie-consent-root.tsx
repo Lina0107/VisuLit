@@ -60,7 +60,7 @@ export function CookieConsentRoot({ gaMeasurementId }: { gaMeasurementId: string
 
       {showBanner ? (
         <div
-          className="fixed inset-x-0 bottom-0 z-[100] border-t border-pink-200 bg-white/95 px-4 py-4 shadow-[0_-8px_30px_rgba(120,60,90,0.12)] backdrop-blur-sm md:px-6"
+          className="fixed inset-x-0 bottom-0 z-[100] border-t border-pink-200 bg-white/95 px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] shadow-[0_-8px_30px_rgba(120,60,90,0.12)] backdrop-blur-sm md:px-6"
           role="dialog"
           aria-label="Cookie preferences"
         >

@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { BRAND_NAME, SUPPORT_EMAIL } from '@/lib/brand';
+import { MARKETING_ILLUSTRATION_CREDIT, MARKETING_PP_IMAGES } from '@/lib/marketing-images';
+import { ExamplesGallery } from '@/components/examples-gallery';
 
 function ErrorWithSupport({ message }: { message: string }) {
   return (
@@ -99,6 +101,8 @@ async function downloadWithWatermark(imgSrc: string, filename: string) {
   });
 }
 
+type SceneVariantPayload = { emotion: string; pose: string; setting: string; notes: string };
+
 // Small reusable component: image card with watermark download/regenerate button
 function PortraitCard({
   imageUrl,
@@ -106,24 +110,38 @@ function PortraitCard({
   filename,
   onRegenerate,
   regenerating = false,
+  onSceneVariant,
+  sceneVariantBusy = false,
 }: {
   imageUrl: string;
   altText: string;
   filename: string;
   onRegenerate?: () => Promise<void> | void;
   regenerating?: boolean;
+  onSceneVariant?: (payload: SceneVariantPayload) => Promise<void>;
+  sceneVariantBusy?: boolean;
 }) {
   const [downloading, setDownloading] = React.useState(false);
+  const [emotion, setEmotion] = React.useState('');
+  const [pose, setPose] = React.useState('');
+  const [setting, setSetting] = React.useState('');
+  const [notes, setNotes] = React.useState('');
+
+  const busy = regenerating || downloading || sceneVariantBusy;
+  const canScene = Boolean(
+    onSceneVariant &&
+      (emotion.trim() || pose.trim() || setting.trim() || notes.trim()),
+  );
 
   return (
     <div className="mt-3 rounded-2xl border border-pink-200 bg-white/60 p-3">
-      <div className="flex items-center justify-between mb-2">
+      <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="text-xs font-semibold text-pink-900/70 uppercase tracking-wider">Generated portrait</div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           {onRegenerate && (
             <button
               type="button"
-              disabled={regenerating || downloading}
+              disabled={busy}
               onClick={() => onRegenerate()}
               className="inline-flex items-center gap-1.5 bg-white hover:bg-pink-50 disabled:opacity-50 text-pink-950 text-xs px-4 py-2 rounded-full font-medium transition ring-1 ring-pink-200"
             >
@@ -153,6 +171,72 @@ function PortraitCard({
       </div>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={imageUrl} alt={altText} className="w-full rounded-xl object-cover" />
+
+      {onSceneVariant && (
+        <details className="mt-3 rounded-xl border border-pink-100 bg-white/50 px-3 py-2 text-pink-950">
+          <summary className="cursor-pointer text-xs font-semibold text-pink-900/80 outline-none marker:text-pink-600">
+            New scene (same character)
+          </summary>
+          <p className="mt-2 text-[11px] leading-snug text-pink-950/65">
+            Change emotion, pose, or place. We send your current portrait as a reference so the model keeps the same face
+            as closely as the API allows — not a perfect guarantee, but much better than text-only.
+          </p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <label className="block text-[11px] font-medium text-pink-900/70">
+              Emotion / expression
+              <input
+                value={emotion}
+                onChange={(e) => setEmotion(e.target.value)}
+                placeholder="e.g. calm half-smile, thoughtful"
+                className="mt-1 w-full rounded-lg border border-pink-200 bg-white/80 px-2 py-1.5 text-xs text-pink-950 outline-none placeholder:text-pink-950/35"
+              />
+            </label>
+            <label className="block text-[11px] font-medium text-pink-900/70">
+              Pose
+              <input
+                value={pose}
+                onChange={(e) => setPose(e.target.value)}
+                placeholder="e.g. three-quarter view, shoulders relaxed"
+                className="mt-1 w-full rounded-lg border border-pink-200 bg-white/80 px-2 py-1.5 text-xs text-pink-950 outline-none placeholder:text-pink-950/35"
+              />
+            </label>
+            <label className="block text-[11px] font-medium text-pink-900/70 sm:col-span-2">
+              Place / setting
+              <input
+                value={setting}
+                onChange={(e) => setSetting(e.target.value)}
+                placeholder="e.g. sunlit library, rainy window behind"
+                className="mt-1 w-full rounded-lg border border-pink-200 bg-white/80 px-2 py-1.5 text-xs text-pink-950 outline-none placeholder:text-pink-950/35"
+              />
+            </label>
+            <label className="block text-[11px] font-medium text-pink-900/70 sm:col-span-2">
+              Extra notes (optional)
+              <input
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Lighting, wardrobe tweak, camera distance…"
+                className="mt-1 w-full rounded-lg border border-pink-200 bg-white/80 px-2 py-1.5 text-xs text-pink-950 outline-none placeholder:text-pink-950/35"
+              />
+            </label>
+          </div>
+          <button
+            type="button"
+            disabled={!canScene || busy}
+            onClick={async () => {
+              if (!onSceneVariant || !canScene) return;
+              await onSceneVariant({
+                emotion: emotion.trim(),
+                pose: pose.trim(),
+                setting: setting.trim(),
+                notes: notes.trim(),
+              });
+            }}
+            className="mt-3 w-full rounded-full bg-pink-100 py-2 text-xs font-semibold text-pink-950 transition hover:bg-pink-200 disabled:opacity-45 sm:w-auto sm:px-6"
+          >
+            {sceneVariantBusy ? 'Generating new scene…' : 'Generate new scene'}
+          </button>
+        </details>
+      )}
     </div>
   );
 }
@@ -168,6 +252,31 @@ async function readApiJson(res: Response): Promise<any> {
     // Backend can occasionally return plain-text 500s (e.g., "Internal Server Error").
     // Normalize to a JSON-like object so UI errors stay user-friendly.
     return { success: false, error: raw.slice(0, 400) };
+  }
+}
+
+/** Raw base64 without data: prefix, for /api/generate scene_variant.reference_image_base64 */
+async function imageUrlToRawBase64(src: string): Promise<string | undefined> {
+  if (!src) return undefined;
+  if (src.startsWith('data:')) {
+    const idx = src.indexOf(';base64,');
+    if (idx !== -1) return src.slice(idx + 8);
+    return undefined;
+  }
+  try {
+    const res = await fetch(src);
+    if (!res.ok) return undefined;
+    const blob = await res.blob();
+    const buf = await blob.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    let binary = '';
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunk)));
+    }
+    return btoa(binary);
+  } catch {
+    return undefined;
   }
 }
 
@@ -265,6 +374,7 @@ export default function HeroSection() {
   const [selectedCharName, setSelectedCharName] = React.useState<string>('');
   const [bookCharImageUrl, setBookCharImageUrl] = React.useState<string>('');
   const [bookCharGenerating, setBookCharGenerating] = React.useState(false);
+  const [bookSceneBusy, setBookSceneBusy] = React.useState(false);
   const [bookCharError, setBookCharError] = React.useState<string>('');
 
   const [preparing, setPreparing] = React.useState(false);
@@ -275,6 +385,7 @@ export default function HeroSection() {
   const [customOut, setCustomOut] = React.useState<string>('');
   const [customImageUrl, setCustomImageUrl] = React.useState<string>('');
   const [customGenerating, setCustomGenerating] = React.useState(false);
+  const [customSceneBusy, setCustomSceneBusy] = React.useState(false);
   const [customName, setCustomName] = React.useState<string>('Original character');
 
   const [books, setBooks] = React.useState<{ book_id: string; title: string; author?: string }[]>([]);
@@ -320,8 +431,6 @@ export default function HeroSection() {
     return () => window.clearInterval(t);
   }, [preparing, etaSeconds]);
 
-  const lastQueryRef = React.useRef<string>('');
-
   React.useEffect(() => {
     refreshUsage();
     loadHistory();
@@ -334,55 +443,20 @@ export default function HeroSection() {
     } catch {}
   }, []);
 
+  /** Single loader: full curated list when search is empty; debounced search when typing (fixes empty list after clearing search). */
   React.useEffect(() => {
     let cancelled = false;
     const controller = new AbortController();
-
-    async function loadInitial() {
-      setBooksLoading(true);
-      setBooksError('');
-      try {
-        const res = await fetch(`/api/books?mode=curated&limit=80`, {
-          cache: 'no-store',
-          signal: controller.signal,
-        });
-        const json = await res.json();
-        if (!res.ok || !json?.success) throw new Error(json?.error || 'Failed to load books');
-        const arr = Array.isArray(json.books) ? json.books : [];
-        if (!cancelled) setBooks(arr);
-      } catch (e: unknown) {
-        if ((e as any)?.name === 'AbortError') return;
-        if (!cancelled) setBooksError(e instanceof Error ? e.message : 'Failed to load books');
-      } finally {
-        if (!cancelled) setBooksLoading(false);
-      }
-    }
-
-    loadInitial();
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, []);
-
-  React.useEffect(() => {
     const q = bookQuery.trim();
-    if (q === lastQueryRef.current) return;
-    lastQueryRef.current = q;
 
-    if (!q) return;
-
-    let cancelled = false;
-    const controller = new AbortController();
-
-    async function loadSearch() {
+    async function loadBooks() {
       setBooksLoading(true);
       setBooksError('');
       try {
-        const res = await fetch(
-          `/api/books?mode=curated&limit=80&query=${encodeURIComponent(q)}`,
-          { cache: 'no-store', signal: controller.signal },
-        );
+        const url = q
+          ? `/api/books?mode=curated&limit=80&query=${encodeURIComponent(q)}`
+          : `/api/books?mode=curated&limit=80`;
+        const res = await fetch(url, { cache: 'no-store', signal: controller.signal });
         const json = await res.json();
         if (!res.ok || !json?.success) throw new Error(json?.error || 'Failed to load books');
         const arr = Array.isArray(json.books) ? json.books : [];
@@ -395,7 +469,10 @@ export default function HeroSection() {
       }
     }
 
-    const t = window.setTimeout(loadSearch, 250);
+    const delayMs = q ? 250 : 0;
+    const t = window.setTimeout(() => {
+      loadBooks();
+    }, delayMs);
     return () => {
       cancelled = true;
       controller.abort();
@@ -529,6 +606,103 @@ export default function HeroSection() {
     }
   }
 
+  async function generateBookSceneVariant(payload: SceneVariantPayload) {
+    if (!selectedCharId || !bookCharImageUrl || bookSceneBusy) return;
+    trackEvent('scene_variant_clicked', { source_type: 'book' });
+    setBookCharError('');
+    setBookSceneBusy(true);
+    const startedAt = Date.now();
+    try {
+      const refB64 = await imageUrlToRawBase64(bookCharImageUrl);
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          character_id: selectedCharId,
+          character_name: selectedCharName,
+          scene_variant: payload,
+          reference_image_base64: refB64,
+        }),
+      });
+      const json = await readApiJson(res);
+      if (!res.ok || !json?.success) {
+        if (json?.limit_reached) {
+          trackEvent('limit_reached', { source_type: 'book' });
+        }
+        throw new Error(
+          json?.error ||
+          `Scene change failed (HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''})`
+        );
+      }
+      trackEvent('scene_variant_success', { source_type: 'book' });
+      setBookCharImageUrl(json.image_url || '');
+      refreshUsage();
+      loadHistory();
+    } catch (e: unknown) {
+      trackEvent('scene_variant_failed', {
+        source_type: 'book',
+        error_message: e instanceof Error ? e.message.slice(0, 120) : 'Scene change failed',
+      });
+      setBookCharError(e instanceof Error ? e.message : 'Scene change failed');
+    } finally {
+      const elapsed = Date.now() - startedAt;
+      const remaining = MIN_GENERATE_SPINNER_MS - elapsed;
+      if (remaining > 0) {
+        await new Promise((r) => window.setTimeout(r, remaining));
+      }
+      setBookSceneBusy(false);
+    }
+  }
+
+  async function generateCustomSceneVariant(payload: SceneVariantPayload) {
+    const base = customPrompt.trim();
+    if (!base || !customImageUrl || customSceneBusy) return;
+    trackEvent('scene_variant_clicked', { source_type: 'custom' });
+    setCustomOut('');
+    setCustomSceneBusy(true);
+    const startedAt = Date.now();
+    try {
+      const refB64 = await imageUrlToRawBase64(customImageUrl);
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          character_name: customName.trim() || 'Original character',
+          base_prompt: base,
+          scene_variant: payload,
+          reference_image_base64: refB64,
+        }),
+      });
+      const json = await readApiJson(res);
+      if (!res.ok || !json?.success) {
+        if (json?.limit_reached) {
+          trackEvent('limit_reached', { source_type: 'custom' });
+        }
+        throw new Error(
+          json?.error ||
+          `Scene change failed (HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''})`
+        );
+      }
+      trackEvent('scene_variant_success', { source_type: 'custom' });
+      setCustomImageUrl(json.image_url || '');
+      refreshUsage();
+      loadHistory();
+    } catch (e: unknown) {
+      trackEvent('scene_variant_failed', {
+        source_type: 'custom',
+        error_message: e instanceof Error ? e.message.slice(0, 120) : 'Scene change failed',
+      });
+      setCustomOut(e instanceof Error ? e.message : 'Scene change failed');
+    } finally {
+      const elapsed = Date.now() - startedAt;
+      const remaining = MIN_GENERATE_SPINNER_MS - elapsed;
+      if (remaining > 0) {
+        await new Promise((r) => window.setTimeout(r, remaining));
+      }
+      setCustomSceneBusy(false);
+    }
+  }
+
   function buildCustomPrompt() {
     const name = (customName || '').trim() || 'Original character';
     return (
@@ -541,8 +715,8 @@ export default function HeroSection() {
   return (
     <section className="w-full text-sm bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(255,182,213,0.55),transparent_60%),radial-gradient(ellipse_70%_50%_at_0%_0%,rgba(255,212,232,0.65),transparent_55%),linear-gradient(180deg,#fff7fb_0%,#fff_55%,#fff7fb_100%)]">
       {showWalkthrough && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm p-4 flex items-center justify-center">
-          <div className="w-full max-w-lg rounded-3xl border border-pink-200 bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="max-h-[min(90vh,32rem)] w-full max-w-lg overflow-y-auto rounded-3xl border border-pink-200 bg-white p-6 shadow-xl">
             <h3 className="text-xl font-semibold text-pink-950">Welcome to {BRAND_NAME}</h3>
             <p className="mt-2 text-sm text-pink-950/70">Quick 3-step walkthrough:</p>
             <ol className="mt-4 space-y-2 text-sm text-pink-950/80 list-decimal list-inside">
@@ -565,17 +739,17 @@ export default function HeroSection() {
           </div>
         </div>
       )}
-      <nav className="flex items-center justify-between p-4 md:px-16 lg:px-24 xl:px-32 md:py-6 w-full">
-        <a href="#" aria-label={`${BRAND_NAME} home`} className="flex items-center gap-3">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-pink-200/70 text-pink-900 ring-1 ring-pink-300/40">
+      <nav className="flex w-full flex-wrap items-center justify-between gap-x-3 gap-y-3 px-3 py-4 sm:px-4 md:px-16 lg:px-24 xl:px-32 md:py-6">
+        <a href="#" aria-label={`${BRAND_NAME} home`} className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-pink-200/70 text-pink-900 ring-1 ring-pink-300/40 sm:h-10 sm:w-10">
             <BookOpenText className="h-5 w-5" />
           </span>
-          <span className="font-semibold tracking-tight text-pink-950">{BRAND_NAME}</span>
+          <span className="truncate font-semibold tracking-tight text-pink-950">{BRAND_NAME}</span>
         </a>
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 sm:flex-none sm:gap-3">
           {usageRemaining !== null && (
             <span
-              className={`hidden sm:inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ${
+              className={`inline-flex max-w-full items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11px] font-semibold ring-1 sm:px-3 sm:text-xs ${
                 usageRemaining === 0
                   ? 'bg-red-50 text-red-700 ring-red-200'
                   : usageRemaining <= 2
@@ -583,47 +757,79 @@ export default function HeroSection() {
                   : 'bg-pink-50 text-pink-800 ring-pink-200'
               }`}
             >
-              <Sparkles className="h-3 w-3" />
-              {usageRemaining === 0
-                ? 'No free generations left today'
-                : `${usageRemaining} of ${usageLimit} free today`}
+              <Sparkles className="h-3 w-3 shrink-0" />
+              <span className="sm:hidden">
+                {usageRemaining === 0 ? 'None left' : `${usageRemaining}/${usageLimit} left`}
+              </span>
+              <span className="hidden sm:inline">
+                {usageRemaining === 0
+                  ? 'No free generations left today'
+                  : `${usageRemaining} of ${usageLimit} free today`}
+              </span>
             </span>
           )}
           <button
             type="button"
             onClick={() => scrollToId('characters')}
-            className="bg-pink-950 hover:bg-pink-900 text-white px-5 py-3 rounded-full font-medium transition"
+            className="shrink-0 rounded-full bg-pink-950 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-pink-900 sm:px-5 sm:py-3 sm:text-base"
           >
-            Get started
+            Try it free
           </button>
         </div>
       </nav>
 
       <div id="top" />
 
-      <div className="flex items-center gap-2 border border-pink-200 hover:border-pink-300/70 rounded-full w-max mx-auto px-4 py-2 mt-24 md:mt-20 bg-white/60 backdrop-blur">
-        <Sparkles className="h-4 w-4 text-pink-700" />
-        <span className="text-pink-950/80">Quotes are extracted from the original book text (no inventions)</span>
-        <button
-          type="button"
-          onClick={() => scrollToId('characters')}
-          className="flex items-center gap-1 font-medium text-pink-900 hover:text-pink-700"
-        >
-          <span>See examples</span>
-          <ChevronRight className="h-4 w-4" />
-        </button>
+      <div className="px-4">
+        <div className="mx-auto mt-20 flex w-full max-w-3xl flex-col items-stretch gap-3 rounded-3xl border border-pink-200 bg-white/60 px-4 py-3 text-center backdrop-blur sm:mt-24 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-x-4 sm:gap-y-2 sm:text-left md:mt-20">
+          <div className="flex items-start justify-center gap-2 sm:min-w-0 sm:flex-1 sm:items-center sm:justify-start">
+            <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-pink-700 sm:mt-0" />
+            <span className="text-left text-sm text-pink-950/80 sm:text-base">
+              Quotes are extracted from the original book text (no inventions)
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => scrollToId('characters')}
+            className="inline-flex shrink-0 items-center justify-center gap-1 rounded-full py-1.5 text-sm font-medium text-pink-900 hover:text-pink-700 sm:py-0"
+          >
+            <span>See examples</span>
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
-      <h1 className="text-4xl md:text-7xl font-semibold max-w-[900px] text-center mx-auto mt-8 text-pink-950">
-        Meet your favorite characters with {BRAND_NAME}
+      <h1 className="mx-auto mt-8 max-w-[900px] px-4 text-center text-3xl font-semibold text-balance text-pink-950 sm:text-4xl md:text-6xl lg:text-7xl">
+        Meet your favorite characters with {BRAND_NAME} — {usageLimit} free generations daily
       </h1>
 
-      <p className="text-sm md:text-base mx-auto max-w-2xl text-center mt-6 max-md:px-2 text-pink-950/70">
+      <p className="mx-auto mt-6 max-w-2xl px-4 text-center text-sm text-pink-950/70 md:text-base">
         {BRAND_NAME} extracts character lists and appearance quotes from public-domain books, then builds photorealistic portrait prompts
         you can reuse, tweak, and regenerate in seconds.
       </p>
 
-      <div className="mx-auto w-full flex items-center justify-center gap-3 mt-8 flex-wrap">
+      <div className="mx-auto mt-5 w-full max-w-2xl px-4 text-center">
+        <div className="rounded-2xl border border-pink-200 bg-white/70 px-4 py-3 text-sm text-pink-950/85 shadow-sm backdrop-blur">
+          <span className="font-semibold text-pink-950">Free to try</span>
+          {' · '}
+          <span>
+            {usageLimit} portrait generations per day — no credit card
+          </span>
+          {' · '}
+          <span className="text-pink-950/90">No signup required</span>
+        </div>
+      </div>
+
+      {usageRemaining !== null && (
+        <p className="mx-auto mt-3 max-w-2xl px-4 text-center text-xs font-medium text-pink-900/70">
+          Today&apos;s generations:{' '}
+          <span className="text-pink-950">
+            {usageRemaining} of {usageLimit} remaining
+          </span>
+        </p>
+      )}
+
+      <div className="mx-auto mt-8 flex w-full flex-wrap items-center justify-center gap-3">
         <button
           type="button"
           onClick={() => scrollToId('characters')}
@@ -645,7 +851,7 @@ export default function HeroSection() {
       <div className="h-24 md:h-28" />
 
       {/* BOOK PICKER */}
-      <div id="characters" className="mx-auto w-full max-w-5xl px-4 md:px-16 lg:px-24 xl:px-32 pb-16">
+      <div id="characters" className="mx-auto w-full max-w-5xl scroll-mt-24 px-4 md:px-16 lg:px-24 xl:px-32 pb-16">
         <div className="rounded-3xl border border-pink-200 bg-white/70 p-6 md:p-10 shadow-[0_18px_50px_rgba(120,60,90,0.10)]">
           <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 ring-1 ring-pink-200 text-pink-950 w-max">
             <Search className="h-4 w-4 text-pink-700" />
@@ -655,9 +861,12 @@ export default function HeroSection() {
           <h2 className="mt-4 text-2xl md:text-3xl font-semibold text-pink-950">
             Start with one book, let {BRAND_NAME} prepare the cast
           </h2>
-          <p className="mt-3 text-pink-950/70 max-w-2xl">
+          <p className="mt-3 max-w-2xl text-pink-950/70">
             Search by title, pick from our curated list, then prepare the book. If a character is missing, type the name and we'll add
             them by searching the book text.
+          </p>
+          <p className="mt-2 text-xs text-pink-900/65">
+            40+ curated picks · Extended catalog matches when your title isn&apos;t on the shortlist · Quote-grounded portraits
           </p>
 
           <div className="mt-8 grid gap-6 lg:grid-cols-2">
@@ -669,7 +878,7 @@ export default function HeroSection() {
                 <input
                   value={bookQuery}
                   onChange={(e) => setBookQuery(e.target.value)}
-                  placeholder="Type a book title…"
+                  placeholder="Search curated titles — full catalog expands matches…"
                   className="w-full bg-transparent text-sm text-pink-950 placeholder:text-pink-950/40 outline-none"
                 />
               </div>
@@ -704,7 +913,23 @@ export default function HeroSection() {
                   </button>
                 ))}
                 {!booksLoading && !booksError && !filteredBooks.length && (
-                  <div className="px-4 py-4 text-sm text-pink-950/60">No matches.</div>
+                  <div className="px-4 py-4 text-sm text-pink-950/60">
+                    {bookQuery.trim() ? (
+                      <>
+                        No matches for &quot;{bookQuery.trim()}&quot;. Try another keyword, or{' '}
+                        <button
+                          type="button"
+                          className="font-medium text-pink-900 underline underline-offset-2 hover:text-pink-700"
+                          onClick={() => setBookQuery('')}
+                        >
+                          clear search
+                        </button>{' '}
+                        to show the full curated list.
+                      </>
+                    ) : (
+                      'No books returned. Check your connection and refresh the page.'
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -786,7 +1011,9 @@ export default function HeroSection() {
               {preparing ? (
                 <div className="mt-3 text-sm text-pink-950/70">Preparing… ~{countdown || etaSeconds}s left</div>
               ) : (
-                missingStatus && <div className="mt-3 text-sm text-pink-950/70">{missingStatus}</div>
+                missingStatus && (
+                  <div className="mt-3 break-words text-sm text-pink-950/70">{missingStatus}</div>
+                )
               )}
 
               {/* CAST + GENERATE */}
@@ -843,17 +1070,21 @@ export default function HeroSection() {
                         )}
                         <button
                           type="button"
-                          disabled={bookCharGenerating || usageRemaining === 0}
+                          disabled={bookCharGenerating || bookSceneBusy || usageRemaining === 0}
                           onClick={generateBookCharacter}
-                          className="w-full bg-pink-950 hover:bg-pink-900 disabled:opacity-50 text-white px-5 py-3 rounded-full font-medium transition inline-flex items-center justify-center gap-2"
+                          className="inline-flex w-full min-h-[44px] items-center justify-center gap-2 rounded-full bg-pink-950 px-4 py-3 text-sm font-medium text-white transition hover:bg-pink-900 disabled:opacity-50 sm:text-base"
                         >
-                          <Sparkles className="h-4 w-4" />
-                          {bookCharGenerating
-                            ? 'Generating portrait…'
-                            : `Generate portrait of ${selectedCharName || 'character'}`}
+                          <Sparkles className="h-4 w-4 shrink-0" />
+                          <span className="text-center leading-snug">
+                            {bookCharGenerating
+                              ? 'Generating portrait…'
+                              : `Generate portrait of ${selectedCharName || 'character'}`}
+                          </span>
                         </button>
-                        {bookCharGenerating && (
-                          <div className="mt-2 text-xs text-center text-pink-950/60">This may take up to a minute…</div>
+                        {(bookCharGenerating || bookSceneBusy) && (
+                          <div className="mt-2 text-xs text-center text-pink-950/60">
+                            {bookSceneBusy ? 'Changing scene… this may take up to a minute.' : 'This may take up to a minute…'}
+                          </div>
                         )}
                         {bookCharImageUrl && !bookCharGenerating && (
                           <PortraitCard
@@ -861,10 +1092,12 @@ export default function HeroSection() {
                             altText={`Portrait of ${selectedCharName}`}
                             filename={`${selectedCharName.replace(/\s+/g, '-').toLowerCase()}-portrait.jpg`}
                             onRegenerate={generateBookCharacter}
-                            regenerating={bookCharGenerating}
+                            regenerating={bookCharGenerating || bookSceneBusy}
+                            onSceneVariant={generateBookSceneVariant}
+                            sceneVariantBusy={bookSceneBusy}
                           />
                         )}
-                        {bookCharError && !bookCharGenerating && (
+                        {bookCharError && !bookCharGenerating && !bookSceneBusy && (
                           <div className="mt-2 text-xs text-red-700">
                             <ErrorWithSupport message={bookCharError} />
                           </div>
@@ -1024,7 +1257,7 @@ export default function HeroSection() {
                   </button>
                   <button
                     type="button"
-                    disabled={!customPrompt.trim() || customGenerating || usageRemaining === 0}
+                    disabled={!customPrompt.trim() || customGenerating || customSceneBusy || usageRemaining === 0}
                     onClick={generateCustomCharacter}
                     className="bg-pink-950 hover:bg-pink-900 disabled:opacity-50 text-white px-5 py-3 rounded-full font-medium transition inline-flex items-center gap-2"
                   >
@@ -1033,9 +1266,11 @@ export default function HeroSection() {
                   </button>
                 </div>
 
-                {customGenerating && (
+                {(customGenerating || customSceneBusy) && (
                   <div className="rounded-2xl border border-pink-200 bg-white/60 p-4 text-center text-sm text-pink-950/70">
-                    Generating portrait… this may take up to a minute.
+                    {customSceneBusy
+                      ? 'Changing scene… this may take up to a minute.'
+                      : 'Generating portrait… this may take up to a minute.'}
                   </div>
                 )}
                 {customImageUrl && !customGenerating && (
@@ -1044,10 +1279,12 @@ export default function HeroSection() {
                     altText="Generated portrait"
                     filename={`${(customName || 'portrait').replace(/\s+/g, '-').toLowerCase()}-portrait.jpg`}
                     onRegenerate={generateCustomCharacter}
-                    regenerating={customGenerating}
+                    regenerating={customGenerating || customSceneBusy}
+                    onSceneVariant={generateCustomSceneVariant}
+                    sceneVariantBusy={customSceneBusy}
                   />
                 )}
-                {customOut && !customGenerating && (
+                {customOut && !customGenerating && !customSceneBusy && (
                   <div className="rounded-2xl border border-pink-200 bg-white/60 p-4">
                     <div className="text-xs font-semibold text-pink-900/70 uppercase tracking-wider">Error</div>
                     <div className="mt-2 text-sm text-red-700 leading-relaxed">
@@ -1138,15 +1375,47 @@ export default function HeroSection() {
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="rounded-3xl border border-pink-200 bg-white/70 p-6 md:p-8 shadow-[0_18px_50px_rgba(120,60,90,0.10)]">
             <h3 className="text-xl md:text-2xl font-semibold text-pink-950">Product in action</h3>
-            <div className="mt-4 space-y-4 text-sm text-pink-950/80">
-              <div className="rounded-2xl border border-pink-200 bg-white/70 p-4">
-                <div className="font-semibold text-pink-950">Elizabeth Bennet</div>
-                <p className="mt-1">“She had a lively, playful disposition, which delighted in anything ridiculous.”</p>
+            <p className="mt-2 text-xs text-pink-900/65">{MARKETING_ILLUSTRATION_CREDIT}</p>
+            <div className="mt-4 space-y-6 text-sm text-pink-950/80">
+              <div className="overflow-hidden rounded-2xl border border-pink-200 bg-white/70">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={MARKETING_PP_IMAGES.elizabethBennet}
+                  alt="Elizabeth Bennet — classic illustration (C. E. Brock, public domain)"
+                  className="aspect-[4/5] w-full object-cover object-top sm:max-h-[min(70vw,22rem)] sm:object-[center_15%]"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div className="p-4">
+                  <div className="font-semibold text-pink-950">Elizabeth Bennet</div>
+                  <p className="mt-1 italic">&ldquo;She had a lively, playful disposition, which delighted in anything ridiculous.&rdquo;</p>
+                  <p className="mt-2 text-xs text-pink-900/60">Example mood — click Generate above for a fresh photoreal portrait from source quotes.</p>
+                </div>
               </div>
-              <div className="rounded-2xl border border-pink-200 bg-white/70 p-4">
-                <div className="font-semibold text-pink-950">Mr. Darcy</div>
-                <p className="mt-1">“His figure was tall, his features handsome, and his manner gave a sense of reserve.”</p>
+              <div className="overflow-hidden rounded-2xl border border-pink-200 bg-white/70">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={MARKETING_PP_IMAGES.mrDarcy}
+                  alt="Mr. Darcy — classic illustration (C. E. Brock, public domain)"
+                  className="aspect-[4/5] w-full object-cover object-[center_25%] sm:max-h-[min(70vw,22rem)]"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div className="p-4">
+                  <div className="font-semibold text-pink-950">Mr. Darcy</div>
+                  <p className="mt-1 italic">&ldquo;His figure was tall, his features handsome, and his manner gave a sense of reserve.&rdquo;</p>
+                  <p className="mt-2 text-xs text-pink-900/60">Same workflow for any prepared character in your book.</p>
+                </div>
               </div>
+            </div>
+            <div className="mt-6">
+              <button
+                type="button"
+                onClick={() => scrollToId('gallery')}
+                className="text-sm font-medium text-pink-900 underline underline-offset-2 hover:text-pink-700"
+              >
+                View AI portrait gallery →
+              </button>
             </div>
           </div>
           <div className="rounded-3xl border border-pink-200 bg-white/70 p-6 md:p-8 shadow-[0_18px_50px_rgba(120,60,90,0.10)]">
@@ -1164,10 +1433,19 @@ export default function HeroSection() {
                 <summary className="cursor-pointer font-medium text-pink-950">Can I regenerate?</summary>
                 <p className="mt-2">Yes, use the Regenerate button under each portrait card for a new variation.</p>
               </details>
+              <details className="rounded-2xl border border-pink-200 bg-white/70 p-3">
+                <summary className="cursor-pointer font-medium text-pink-950">Can I change scene but keep the same face?</summary>
+                <p className="mt-2">
+                  Use <span className="font-medium">New scene (same character)</span> under a portrait: describe emotion, pose, and place.
+                  We send your current image as a reference and stress identity in the prompt. Results vary by model; perfect likeness is not guaranteed without a provider that accepts reference images (see server env <code className="text-xs">IMAGE_REFERENCE_BASE64_FIELD</code>).
+                </p>
+              </details>
             </div>
           </div>
         </div>
       </div>
+
+      <ExamplesGallery />
 
       <footer className="border-t border-pink-200/60 bg-white/50">
         <div className="mx-auto w-full max-w-6xl px-4 md:px-16 lg:px-24 xl:px-32 py-10 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">

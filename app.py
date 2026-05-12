@@ -4,11 +4,13 @@ from flask_cors import CORS
 import json
 import os
 import hashlib
+import base64
 from datetime import datetime, timezone
 import requests
 import uuid
 import re
 import time
+import unicodedata
 
 from dotenv import load_dotenv
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -464,14 +466,10 @@ def prepare_main_characters(book_title: str, full_text: str, raw_candidates, mai
     clusters = cluster_candidates(raw_candidates)
     clean = clean_gutenberg_text(full_text)
 
-    # Small slice — enough to recognise characters, not pay for huge input
-    if len(clean) <= 80000:
-        text_slice = clean
-    else:
-        a = clean[:50000]
-        mid_start = max(0, len(clean) // 2 - 15000)
-        b = clean[mid_start: mid_start + 30000]
-        text_slice = a + "\n\n[MIDDLE]\n\n" + b
+    # Use full cleaned text for higher quality character selection.
+    # This is more expensive, but avoids missing characters that are
+    # described outside the old head+middle slice.
+    text_slice = clean
 
     system = "You are a literature analyst. Return ONLY valid JSON. No markdown, no extra text."
 
@@ -483,7 +481,7 @@ def prepare_main_characters(book_title: str, full_text: str, raw_candidates, mai
     }
 
     prompt = (
-        "Given: book title, candidate name clusters from the text, and a text excerpt.\n"
+        "Given: book title, candidate name clusters from the text, and the full cleaned text.\n"
         "Task: select up to main_limit characters. USE THE FULL LIMIT when the novel has many important figures.\n"
         "Rules (apply to ANY novel, not just known titles):\n"
         "1. Merge clusters that refer to the same person. Use ONLY names that appear in the provided clusters.\n"
@@ -838,6 +836,21 @@ def _book_location(offset: int, total: int):
         return "middle"
     return "late"
 
+
+def _normalize_for_match(s: str) -> str:
+    """
+    Lowercase + strip diacritics + collapse punctuation/spaces.
+    Helps match aliases like "Natásha" against "Natasha".
+    """
+    if not s:
+        return ""
+    s = unicodedata.normalize("NFKD", s)
+    s = "".join(ch for ch in s if not unicodedata.combining(ch))
+    s = s.lower()
+    s = re.sub(r"[^a-z0-9\s]", " ", s)
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
+
 def build_appearance_candidates(full_text: str, characters, max_per_char=28):
     clean = clean_gutenberg_text(full_text)
     total = len(clean)
@@ -874,7 +887,7 @@ def build_appearance_candidates(full_text: str, characters, max_per_char=28):
         # compile alias patterns with word boundaries to avoid false hits (e.g., "May" in "maybe")
         alias_patterns = []
         for a in aliases[:6]:
-            aa = a.lower().strip()
+            aa = _normalize_for_match(a)
             if not aa:
                 continue
             alias_patterns.append(re.compile(rf"\b{re.escape(aa)}\b"))
@@ -884,7 +897,7 @@ def build_appearance_candidates(full_text: str, characters, max_per_char=28):
 
         # scan sentences, look for alias mention, then pick window (prev + this + next)
         for i, (sent, offset) in enumerate(sentences):
-            lower = sent.lower()
+            lower = _normalize_for_match(sent)
             hit_alias = None
             for p in alias_patterns:
                 if p.search(lower):
@@ -923,9 +936,10 @@ def build_appearance_candidates(full_text: str, characters, max_per_char=28):
             if not qualifies:
                 continue
 
-            # reject snippets that look like pure dialogue (>30% inside quotes)
+            # Tolstoy/Austen often put valid appearance details inside dialogue.
+            # Keep only very quote-heavy fragments out.
             quote_chars = sum(1 for c in snippet if c in ('"', '"', '"', "'"))
-            if quote_chars > len(snippet) * 0.30:
+            if quote_chars > len(snippet) * 0.60:
                 continue
 
             # Prefer: name and visual description in the SAME sentence (less ambiguity)
@@ -1158,6 +1172,171 @@ def build_auto_description_from_character(book: dict, character: dict, max_quote
     )
 
     return header + "." + quotes_part + style_hint
+
+
+# -------------------- scene variant (same identity, new pose / emotion / setting) --------------------
+MAX_REFERENCE_IMAGE_BYTES = 4 * 1024 * 1024
+_SCENE_NEG_WORDS = re.compile(
+    r"\b(tear|tears|cry|cries|crying|sob|sobs|sobbing|grief|sorrow|despair|"
+    r"wretched|weep|weeping|distress|moan|lament)\b",
+    re.I,
+)
+
+
+def _sanitize_scene_field(s: str, max_len: int = 280) -> str:
+    if not s or not isinstance(s, str):
+        return ""
+    s = s.strip()
+    if len(s) > max_len:
+        s = s[:max_len].rsplit(" ", 1)[0] + "…"
+    return s
+
+
+def _decode_reference_image_base64(raw: str):
+    """Returns raw bytes or None."""
+    if not raw or not isinstance(raw, str):
+        return None
+    s = raw.strip()
+    if s.startswith("data:"):
+        if ";base64," not in s:
+            return None
+        s = s.split(";base64,", 1)[1].strip()
+    try:
+        out = base64.standard_b64decode(s)
+        if len(out) > MAX_REFERENCE_IMAGE_BYTES:
+            return None
+        return out
+    except Exception:
+        return None
+
+
+def _pick_neutral_appearance_snippet(character: dict, max_len: int = 140) -> str:
+    """Prefer short appearance lines without strong distress wording (reduces 'always crying' bias)."""
+    if not character:
+        return ""
+    for q in character.get("appearance_quotes") or []:
+        txt = (q.get("quote") or "").strip() if isinstance(q, dict) else str(q).strip()
+        if not txt or _SCENE_NEG_WORDS.search(txt):
+            continue
+        if len(txt) > max_len:
+            txt = txt[:max_len].rsplit(" ", 1)[0] + "…"
+        return txt
+    return ""
+
+
+def build_scene_variant_prompt(
+    character_name: str,
+    book: dict | None,
+    scene_variant: dict,
+    *,
+    reference_image_present: bool,
+    literary_snippet: str,
+    base_prompt_custom: str | None,
+) -> str:
+    """
+    Same person, new scene. When a reference image is present we rely on it for identity and avoid sad quotes.
+    For custom portraits, base_prompt_custom carries the prior full text prompt.
+    """
+    emotion = _sanitize_scene_field(scene_variant.get("emotion") or "")
+    pose = _sanitize_scene_field(scene_variant.get("pose") or "")
+    setting = _sanitize_scene_field(scene_variant.get("setting") or "")
+    notes = _sanitize_scene_field(scene_variant.get("notes") or "", 400)
+
+    title = (book or {}).get("title") or ""
+    author = (book or {}).get("author") or ""
+    ctx = ""
+    if title:
+        ctx = f'Set in the world of the novel "{title}"' + (f" by {author}" if author else "") + ". "
+
+    identity_lock = (
+        "CRITICAL — IDENTITY LOCK: Keep the exact same person as in the reference portrait. "
+        "Preserve facial bone structure, eyes, nose, lips, jaw, cheeks, brows, skin tone, apparent age, "
+        "hair color and hairstyle. Do not replace with a different face. "
+        "Change only what is requested below: expression, pose, framing, lighting, clothing arrangement if needed, and background."
+    )
+    if not reference_image_present:
+        identity_lock = (
+            "CRITICAL — IDENTITY LOCK: Stay consistent with this named literary character. "
+            "Preserve a stable facial identity across the image; vary only expression, pose, setting, and lighting as directed."
+        )
+
+    changes = []
+    if emotion:
+        changes.append(f"Facial expression / emotion: {emotion}")
+    if pose:
+        changes.append(f"Pose and body language: {pose}")
+    if setting:
+        changes.append(f"Environment / location: {setting}")
+    if notes:
+        changes.append(f"Additional direction: {notes}")
+    if not changes:
+        changes.append(
+            "Subtle variation only: calm neutral expression, slight change in head tilt and shoulders, refined lighting."
+        )
+    changes_txt = "\n".join(f"- {c}" for c in changes)
+
+    snippet_part = ""
+    if literary_snippet and not reference_image_present:
+        snippet_part = f' Appearance cues from the text (avoid contradicting identity): "{literary_snippet}"'
+
+    custom_part = ""
+    if base_prompt_custom:
+        bp = base_prompt_custom.strip()
+        if len(bp) > 900:
+            bp = bp[:900].rsplit(" ", 1)[0] + "…"
+        custom_part = (
+            " Prior portrait prompt for this same character (keep their look consistent): "
+            + bp
+        )
+
+    style_hint = (
+        " Photorealistic cinematic portrait, detailed skin texture, realistic hair, natural soft light, "
+        "sharp focus on eyes, period-appropriate wardrobe when relevant. No cartoon or illustration style."
+    )
+
+    header = f"Portrait of {character_name}. {ctx}".strip()
+    return (
+        f"{header}\n{identity_lock}\n"
+        f"Vary the scene as follows:\n{changes_txt}"
+        f"{snippet_part}{custom_part}{style_hint}"
+    )
+
+
+def _extract_image_url_from_provider_json(img_data) -> str | None:
+    image_url = None
+    arr = (img_data.get("data") if isinstance(img_data, dict) else None) or []
+    if isinstance(arr, list) and arr and isinstance(arr[0], dict):
+        item = arr[0]
+        if item.get("url"):
+            image_url = str(item["url"])
+        elif item.get("b64_json"):
+            mime = item.get("mime_type") or item.get("content_type") or "image/png"
+            image_url = f"data:{mime};base64,{item['b64_json']}"
+    if not image_url and isinstance(img_data, dict):
+        image_url = img_data.get("image_url") or img_data.get("url")
+    return image_url
+
+
+def _call_image_provider(prompt: str, reference_bytes=None) -> str:
+    image_model = os.getenv("IMAGE_MODEL", "gemini-3-pro-image-preview").strip()
+    image_size = os.getenv("IMAGE_SIZE", "1024x1536").strip()
+    if not AITUNNEL_API_KEY or not AITUNNEL_BASE_URL:
+        raise RuntimeError("Image generation not configured (API key/base url missing)")
+    img_endpoint = f"{AITUNNEL_BASE_URL.rstrip('/')}/images/generations"
+    headers = {"Authorization": f"Bearer {AITUNNEL_API_KEY}", "Content-Type": "application/json"}
+    payload = {"model": image_model, "prompt": prompt, "n": 1, "size": image_size}
+    ref_field = os.getenv("IMAGE_REFERENCE_BASE64_FIELD", "").strip()
+    if reference_bytes and ref_field:
+        payload[ref_field] = base64.standard_b64encode(reference_bytes).decode("ascii")
+    img_resp = requests.post(img_endpoint, headers=headers, json=payload, timeout=240)
+    img_resp.raise_for_status()
+    img_data = img_resp.json()
+    image_url = _extract_image_url_from_provider_json(img_data)
+    if not image_url:
+        raise RuntimeError(
+            f"Image generation returned no image url (keys: {list(img_data.keys()) if isinstance(img_data, dict) else type(img_data).__name__})"
+        )
+    return image_url
 
 
 # -------------------- routes --------------------
@@ -1654,9 +1833,147 @@ def api_add_character():
     return jsonify({"success": True, "character": rec})
 
 
+def _api_generate_scene_variant(data: dict):
+    """New pose / emotion / setting while trying to keep the same face (prompt + optional reference image bytes)."""
+    scene_variant = data.get("scene_variant") or {}
+    if not isinstance(scene_variant, dict) or not scene_variant:
+        return jsonify({"success": False, "error": "scene_variant object required"}), 400
+
+    emotion = _sanitize_scene_field(scene_variant.get("emotion") or "")
+    pose = _sanitize_scene_field(scene_variant.get("pose") or "")
+    setting = _sanitize_scene_field(scene_variant.get("setting") or "")
+    notes = _sanitize_scene_field(scene_variant.get("notes") or "", 400)
+    if not any([emotion, pose, setting, notes]):
+        return jsonify({
+            "success": False,
+            "error": "Add at least one of: emotion, pose, setting, or notes",
+        }), 400
+
+    character_id = (data.get("character_id") or "").strip()
+    character_name = (data.get("character_name") or "").strip()
+    base_prompt_custom = (data.get("base_prompt") or "").strip()
+
+    ref_raw = (data.get("reference_image_base64") or "").strip()
+    ref_bytes = _decode_reference_image_base64(ref_raw)
+
+    ch = None
+    book = None
+    if character_id:
+        all_chars = load_json(CHARACTERS_FILE, [])
+        ch = next((c for c in all_chars if c.get("character_id") == character_id), None)
+        if not ch:
+            return jsonify({"success": False, "error": "character_id not found"}), 404
+        book = find_book_by_id(ch.get("book_id"))
+        if not character_name:
+            character_name = (ch.get("character_name") or "").strip()
+
+    if not character_name:
+        return jsonify({"success": False, "error": "character_name required"}), 400
+
+    if not character_id and not base_prompt_custom:
+        return jsonify({"success": False, "error": "base_prompt required for custom scene variant"}), 400
+
+    literary_snippet = ""
+    if ch and not ref_bytes:
+        literary_snippet = _pick_neutral_appearance_snippet(ch)
+
+    description = build_scene_variant_prompt(
+        character_name,
+        book,
+        scene_variant,
+        reference_image_present=bool(ref_bytes),
+        literary_snippet=literary_snippet,
+        base_prompt_custom=base_prompt_custom if not character_id else None,
+    )
+
+    user_id = get_user_id(request)
+
+    prompt_hash = hashlib.md5(
+        ("scene_variant:" + description + json.dumps(scene_variant, sort_keys=True)).encode("utf-8")
+    ).hexdigest()
+    normalized_char_id = character_id or None
+
+    try:
+        history_items = load_json(HISTORY_FILE, [])
+        if isinstance(history_items, list):
+            for rec in reversed(history_items):
+                if not isinstance(rec, dict):
+                    continue
+                if rec.get("user_id") != user_id:
+                    continue
+                rec_char_id = rec.get("character_id") or None
+                if rec_char_id != normalized_char_id:
+                    continue
+                if rec.get("prompt_hash") == prompt_hash:
+                    image_url = rec.get("image_url")
+                    if image_url:
+                        remaining = get_remaining_today(user_id)
+                        return jsonify({
+                            "success": True,
+                            "image_url": image_url,
+                            "character_name": rec.get("character_name") or character_name,
+                            "remaining_free_count": remaining,
+                            "cached": True,
+                            "scene_variant": True,
+                        })
+    except Exception:
+        pass
+
+    allowed, remaining = check_and_update_usage(user_id)
+    if not allowed:
+        return jsonify({
+            "success": False,
+            "error": "Daily generation limit reached",
+            "limit_reached": True,
+            "daily_limit": DAILY_FREE_LIMIT,
+        }), 403
+
+    try:
+        image_url = _call_image_provider(description, ref_bytes)
+    except RuntimeError as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    except Exception as e:
+        app.logger.exception("scene_variant: provider failed for character_name=%s", character_name)
+        return jsonify({"success": False, "error": f"Image generation failed: {type(e).__name__}: {str(e)}"}), 500
+
+    source_type = "book" if character_id else "custom"
+    history_record = {
+        "id": str(uuid.uuid4()),
+        "source_type": source_type,
+        "character_id": character_id or None,
+        "character_name": character_name,
+        "description": description,
+        "prompt_hash": prompt_hash,
+        "image_url": image_url,
+        "generation_kind": "scene_variant",
+        "scene_variant": scene_variant,
+    }
+    try:
+        append_history_record(user_id, history_record)
+    except Exception:
+        pass
+
+    resp = make_response(jsonify({
+        "success": True,
+        "image_url": image_url,
+        "character_name": character_name,
+        "remaining_free_count": remaining,
+        "scene_variant": True,
+    }))
+
+    if not request.cookies.get("user_id"):
+        resp.set_cookie("user_id", user_id, max_age=365 * 24 * 60 * 60)
+
+    return resp
+
+
 @app.route("/api/generate", methods=["POST"])
 def api_generate():
     data = request.get_json(silent=True) or {}
+
+    scene_variant = data.get("scene_variant")
+    if isinstance(scene_variant, dict) and scene_variant:
+        return _api_generate_scene_variant(data)
 
     character_name = (data.get("character_name") or "").strip()
     description = (data.get("description") or "").strip()
@@ -1737,45 +2054,13 @@ def api_generate():
             "daily_limit": DAILY_FREE_LIMIT
         }), 403
 
-    # Real image generation (OpenAI-compatible /images/generations on the same provider base_url).
-    # For NeuroAPI "Nano Banana" use model: "gemini-3-pro-image-preview".
-    image_model = os.getenv("IMAGE_MODEL", "gemini-3-pro-image-preview").strip()
-    image_size = os.getenv("IMAGE_SIZE", "1024x1536").strip()
-
-    if not AITUNNEL_API_KEY or not AITUNNEL_BASE_URL:
-        return jsonify({"success": False, "error": "Image generation not configured (API key/base url missing)"}), 500
-
-    img_url = f"{AITUNNEL_BASE_URL.rstrip('/')}/images/generations"
-    headers = {"Authorization": f"Bearer {AITUNNEL_API_KEY}", "Content-Type": "application/json"}
-    payload = {"model": image_model, "prompt": description, "n": 1, "size": image_size}
-
     try:
-        img_resp = requests.post(img_url, headers=headers, json=payload, timeout=240)
-        img_resp.raise_for_status()
-        img_data = img_resp.json()
+        image_url = _call_image_provider(description, None)
+    except RuntimeError as e:
+        return jsonify({"success": False, "error": str(e)}), 500
     except Exception as e:
         app.logger.exception("generate: image provider request failed for character_name=%s", character_name)
         return jsonify({"success": False, "error": f"Image generation failed: {type(e).__name__}: {str(e)}"}), 500
-
-    # OpenAI-compatible response:
-    # - { "data": [ { "url": "https://..." } ] }
-    # - or { "data": [ { "b64_json": "..." } ] }
-    image_url = None
-    arr = (img_data.get("data") if isinstance(img_data, dict) else None) or []
-    if isinstance(arr, list) and arr and isinstance(arr[0], dict):
-        item = arr[0]
-        if item.get("url"):
-            image_url = str(item["url"])
-        elif item.get("b64_json"):
-            # Return as data URI so frontend can render directly.
-            mime = item.get("mime_type") or item.get("content_type") or "image/png"
-            image_url = f"data:{mime};base64,{item['b64_json']}"
-    # last-resort fields
-    if not image_url and isinstance(img_data, dict):
-        image_url = img_data.get("image_url") or img_data.get("url")
-
-    if not image_url:
-        return jsonify({"success": False, "error": f"Image generation returned no image url (response keys: {list(img_data.keys()) if isinstance(img_data, dict) else type(img_data).__name__})"}), 500
 
     # save to per-user history (even for mock stage)
     source_type = "book" if character_id else "custom"

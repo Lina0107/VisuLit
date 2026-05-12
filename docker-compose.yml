@@ -11,6 +11,7 @@ services:
       # Optional image model/size overrides
       - IMAGE_MODEL=${IMAGE_MODEL:-gemini-3-pro-image-preview}
       - IMAGE_SIZE=${IMAGE_SIZE:-1024x1536}
+      - IMAGE_REFERENCE_BASE64_FIELD=${IMAGE_REFERENCE_BASE64_FIELD:-}
     volumes:
       - ./data:/app/data
     restart: unless-stopped
