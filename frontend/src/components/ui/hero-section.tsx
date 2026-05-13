@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { BRAND_NAME, SUPPORT_EMAIL } from '@/lib/brand';
-import { MARKETING_ILLUSTRATION_CREDIT, MARKETING_PP_IMAGES } from '@/lib/marketing-images';
 import { ExamplesGallery } from '@/components/examples-gallery';
 
 function ErrorWithSupport({ message }: { message: string }) {
@@ -285,82 +284,6 @@ function trackEvent(name: string, params?: Record<string, unknown>) {
   const gtag = (window as any).gtag;
   if (typeof gtag !== 'function') return;
   gtag('event', name, params || {});
-}
-
-function quoteText(q: any): string {
-  if (!q) return '';
-  if (typeof q === 'string') return q;
-  if (typeof q.quote === 'string') return q.quote;
-  return '';
-}
-
-function pickFirstMatchingQuote(items: any[], allowKeywords: string[], rejectPatterns: RegExp[]): string {
-  const kws = allowKeywords.map((k) => k.toLowerCase());
-  for (const it of items || []) {
-    const txt = (quoteText(it) || '').trim();
-    if (!txt) continue;
-    if (rejectPatterns.some((re) => re.test(txt))) continue;
-    if (kws.length === 0) return txt;
-    const lower = txt.toLowerCase();
-    if (kws.some((kw) => lower.includes(kw))) return txt;
-  }
-  for (const it of items || []) {
-    const txt = (quoteText(it) || '').trim();
-    if (!txt) continue;
-    if (rejectPatterns.some((re) => re.test(txt))) continue;
-    return txt;
-  }
-  return '';
-}
-
-function pickBestAppearanceQuote(items: any[]): string {
-  const rejectMeta = [/CHAPTER/i, /Heading to Chapter/i, /Tailpiece/i];
-
-  const groups: Array<{ keywords: string[]; weight: number }> = [
-    { keywords: ['eyes', 'eye', 'brow', 'cheek', 'complexion', 'lips', 'face', 'countenance', 'handsome', 'beautiful'], weight: 10 },
-    { keywords: ['hair', 'ringlet', 'curly', 'locks'], weight: 9 },
-    { keywords: ['gown', 'petticoat', 'dress', 'coat', 'clothe', 'clothing'], weight: 7 },
-    { keywords: ['figure', 'height', 'tall', 'slender', 'stature'], weight: 6 },
-    { keywords: ['red', 'blue', 'gray', 'grey', 'green', 'black', 'brown', 'white'], weight: 5 },
-  ];
-
-  let best = '';
-  let bestScore = -1;
-
-  for (const it of items || []) {
-    const txt = (quoteText(it) || '').trim();
-    if (!txt) continue;
-    if (rejectMeta.some((re) => re.test(txt))) continue;
-
-    const lower = txt.toLowerCase();
-    let score = 0;
-    for (const g of groups) {
-      if (g.keywords.some((kw) => lower.includes(kw))) score += g.weight;
-    }
-
-    if (score > bestScore) {
-      bestScore = score;
-      best = txt;
-    }
-  }
-
-  // fallback to the first non-empty
-  if (best) return best;
-  for (const it of items || []) {
-    const txt = (quoteText(it) || '').trim();
-    if (txt) return txt;
-  }
-  return '';
-}
-
-function pickBestEvidenceQuote(items: any[]): string {
-  const rejectMeta = [/CHAPTER/i, /Heading to Chapter/i, /Tailpiece/i, /Journal/i, /Diary/i];
-  return pickFirstMatchingQuote(
-    items,
-    // prefer a real sentence-ish evidence chunk
-    ['said', 'went', 'walk', 'danced', 'entered', 'obliged', 'had been', 'mr', 'miss', 'bennet', 'darcy', 'she', 'he'],
-    rejectMeta
-  );
 }
 
 export default function HeroSection() {
@@ -1025,29 +948,17 @@ export default function HeroSection() {
                   <>
                     <select
                       value={selectedCharId}
-                      onChange={async (e) => {
+                      onChange={(e) => {
                         const id = e.target.value;
                         setSelectedCharId(id);
                         setBookCharImageUrl('');
                         setBookCharError('');
-                        if (!id || !selectedBookId) { setSelectedCharName(''); return; }
-                        try {
-                          const r = await fetch(`/api/characters?book_id=${encodeURIComponent(selectedBookId)}`, { cache: 'no-store' });
-                          const j = await r.json();
-                          if (!r.ok || !j?.success) return;
-                          const full = Array.isArray(j.characters) ? j.characters : [];
-                          const found = full.find((x: any) => String(x.character_id) === id);
-                          if (found) {
-                            setSelectedCharName(found.character_name || '');
-                            const apq = Array.isArray(found.appearance_quotes) ? found.appearance_quotes : [];
-                            const evq = Array.isArray(found.evidence_quotes) ? found.evidence_quotes : [];
-                            const bestA = pickBestAppearanceQuote(apq);
-                            const bestE = pickBestEvidenceQuote(evq);
-                            const firstA = bestA ? `Appearance: "${bestA}"` : 'No appearance quote.';
-                            const firstE = bestE ? `Evidence: "${bestE}"` : '';
-                            setMissingStatus([found.character_name, firstA, firstE].filter(Boolean).join('  ·  '));
-                          }
-                        } catch {}
+                        if (!id) {
+                          setSelectedCharName('');
+                          return;
+                        }
+                        const c = cast.find((x) => x.character_id === id);
+                        setSelectedCharName(c?.character_name || '');
                       }}
                       className="mt-2 w-full rounded-2xl border border-pink-200 bg-white/70 px-4 py-3 text-sm text-pink-950 outline-none"
                     >
@@ -1302,6 +1213,8 @@ export default function HeroSection() {
         </div>
       </div>
 
+      <ExamplesGallery />
+
       {/* HISTORY */}
       <div className="mx-auto w-full max-w-6xl px-4 md:px-16 lg:px-24 xl:px-32 pb-20">
         <div className="rounded-3xl border border-pink-200 bg-white/70 p-6 md:p-10 shadow-[0_18px_50px_rgba(120,60,90,0.10)]">
@@ -1370,56 +1283,19 @@ export default function HeroSection() {
         </div>
       </div>
 
-      {/* PRODUCT IN ACTION + FAQ */}
+      {/* FAQ */}
       <div className="mx-auto w-full max-w-6xl px-4 md:px-16 lg:px-24 xl:px-32 pb-20">
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-3xl border border-pink-200 bg-white/70 p-6 md:p-8 shadow-[0_18px_50px_rgba(120,60,90,0.10)]">
-            <h3 className="text-xl md:text-2xl font-semibold text-pink-950">Product in action</h3>
-            <p className="mt-2 text-xs text-pink-900/65">{MARKETING_ILLUSTRATION_CREDIT}</p>
-            <div className="mt-4 space-y-6 text-sm text-pink-950/80">
-              <div className="overflow-hidden rounded-2xl border border-pink-200 bg-white/70">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={MARKETING_PP_IMAGES.elizabethBennet}
-                  alt="Elizabeth Bennet — classic illustration (C. E. Brock, public domain)"
-                  className="aspect-[4/5] w-full object-cover object-top sm:max-h-[min(70vw,22rem)] sm:object-[center_15%]"
-                  loading="lazy"
-                  decoding="async"
-                />
-                <div className="p-4">
-                  <div className="font-semibold text-pink-950">Elizabeth Bennet</div>
-                  <p className="mt-1 italic">&ldquo;She had a lively, playful disposition, which delighted in anything ridiculous.&rdquo;</p>
-                  <p className="mt-2 text-xs text-pink-900/60">Example mood — click Generate above for a fresh photoreal portrait from source quotes.</p>
-                </div>
-              </div>
-              <div className="overflow-hidden rounded-2xl border border-pink-200 bg-white/70">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={MARKETING_PP_IMAGES.mrDarcy}
-                  alt="Mr. Darcy — classic illustration (C. E. Brock, public domain)"
-                  className="aspect-[4/5] w-full object-cover object-[center_25%] sm:max-h-[min(70vw,22rem)]"
-                  loading="lazy"
-                  decoding="async"
-                />
-                <div className="p-4">
-                  <div className="font-semibold text-pink-950">Mr. Darcy</div>
-                  <p className="mt-1 italic">&ldquo;His figure was tall, his features handsome, and his manner gave a sense of reserve.&rdquo;</p>
-                  <p className="mt-2 text-xs text-pink-900/60">Same workflow for any prepared character in your book.</p>
-                </div>
-              </div>
-            </div>
-            <div className="mt-6">
-              <button
-                type="button"
-                onClick={() => scrollToId('gallery')}
-                className="text-sm font-medium text-pink-900 underline underline-offset-2 hover:text-pink-700"
-              >
-                View AI portrait gallery →
-              </button>
-            </div>
-          </div>
-          <div className="rounded-3xl border border-pink-200 bg-white/70 p-6 md:p-8 shadow-[0_18px_50px_rgba(120,60,90,0.10)]">
+        <div className="mx-auto max-w-3xl rounded-3xl border border-pink-200 bg-white/70 p-6 md:p-8 shadow-[0_18px_50px_rgba(120,60,90,0.10)]">
+          <div className="flex flex-wrap items-end justify-between gap-3">
             <h3 className="text-xl md:text-2xl font-semibold text-pink-950">FAQ</h3>
+            <button
+              type="button"
+              onClick={() => scrollToId('gallery')}
+              className="text-sm font-medium text-pink-900 underline underline-offset-2 hover:text-pink-700"
+            >
+              Portrait gallery ↑
+            </button>
+          </div>
             <div className="mt-4 space-y-3 text-sm text-pink-950/80">
               <details className="rounded-2xl border border-pink-200 bg-white/70 p-3">
                 <summary className="cursor-pointer font-medium text-pink-950">Why these quotes?</summary>
@@ -1441,11 +1317,8 @@ export default function HeroSection() {
                 </p>
               </details>
             </div>
-          </div>
         </div>
       </div>
-
-      <ExamplesGallery />
 
       <footer className="border-t border-pink-200/60 bg-white/50">
         <div className="mx-auto w-full max-w-6xl px-4 md:px-16 lg:px-24 xl:px-32 py-10 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">

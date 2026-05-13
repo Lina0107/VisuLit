@@ -1,8 +1,8 @@
 {
-  email {env.CADDY_EMAIL}
+  email {$CADDY_EMAIL}
 }
 
-{env.DOMAIN} {
+{$DOMAIN} {
   reverse_proxy frontend:3000
 }
 
