@@ -30,6 +30,10 @@ On the VPS:
    - `docker --version`
    - `docker compose version`
 
+## Private GitHub repo (optional)
+
+If you make the repo **private**, configure a **deploy key** on the VPS so `git pull` keeps working. See [docs/PRIVATE_GITHUB_REPO.md](./docs/PRIVATE_GITHUB_REPO.md) and run `scripts/setup_github_private_deploy_key.sh` on the server.
+
 ## 4) Prepare your project on the VPS
 Copy this whole folder to the VPS so that these files/folders exist:
 - `docker-compose.yml`
