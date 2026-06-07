@@ -286,6 +286,15 @@ function trackEvent(name: string, params?: Record<string, unknown>) {
   gtag('event', name, params || {});
 }
 
+function mapApiCharactersToCast(characters: unknown[]): { character_id: string; character_name: string }[] {
+  return characters
+    .map((c: any) => ({
+      character_id: String(c?.character_id || ''),
+      character_name: String(c?.character_name || ''),
+    }))
+    .filter((c) => c.character_id && c.character_name);
+}
+
 export default function HeroSection() {
   const [bookQuery, setBookQuery] = React.useState('');
   const [selectedBookId, setSelectedBookId] = React.useState<string>('');
@@ -340,6 +349,31 @@ export default function HeroSection() {
       }
     } catch {}
   }, []);
+
+  const loadCastForBook = React.useCallback(async (bookId: string) => {
+    if (!bookId) {
+      setCast([]);
+      return;
+    }
+    setCastLoading(true);
+    try {
+      const r = await fetch(`/api/characters?book_id=${encodeURIComponent(bookId)}`, { cache: 'no-store' });
+      const j = await r.json();
+      if (r.ok && j?.success && Array.isArray(j.characters)) {
+        setCast(mapApiCharactersToCast(j.characters));
+      } else {
+        setCast([]);
+      }
+    } catch {
+      setCast([]);
+    } finally {
+      setCastLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    void loadCastForBook(selectedBookId);
+  }, [selectedBookId, loadCastForBook]);
 
   React.useEffect(() => {
     if (!preparing) return;
@@ -429,7 +463,7 @@ export default function HeroSection() {
     }
   }
 
-  async function generateBookCharacter() {
+  async function generateBookCharacter(forceNew = false) {
     if (!selectedCharId || bookCharGenerating) return;
     trackEvent('generate_clicked', { source_type: 'book' });
     setBookCharImageUrl('');
@@ -444,6 +478,7 @@ export default function HeroSection() {
           character_id: selectedCharId,
           character_name: selectedCharName,
           auto_description: true,
+          ...(forceNew ? { force_new: true } : {}),
         }),
       });
       const json = await readApiJson(res);
@@ -479,7 +514,7 @@ export default function HeroSection() {
     }
   }
 
-  async function generateCustomCharacter() {
+  async function generateCustomCharacter(forceNew = false) {
     const prompt = customPrompt.trim();
     if (!prompt || customGenerating) return;
     trackEvent('generate_clicked', { source_type: 'custom' });
@@ -494,6 +529,7 @@ export default function HeroSection() {
         body: JSON.stringify({
           character_name: customName.trim() || 'Original character',
           description: prompt,
+          ...(forceNew ? { force_new: true } : {}),
         }),
       });
       const json = await readApiJson(res);
@@ -545,6 +581,7 @@ export default function HeroSection() {
           character_name: selectedCharName,
           scene_variant: payload,
           reference_image_base64: refB64,
+          reference_image_url: bookCharImageUrl.startsWith('http') ? bookCharImageUrl : undefined,
         }),
       });
       const json = await readApiJson(res);
@@ -594,6 +631,7 @@ export default function HeroSection() {
           base_prompt: base,
           scene_variant: payload,
           reference_image_base64: refB64,
+          reference_image_url: customImageUrl.startsWith('http') ? customImageUrl : undefined,
         }),
       });
       const json = await readApiJson(res);
@@ -824,7 +862,6 @@ export default function HeroSection() {
                       setSelectedCharName('');
                       setBookCharImageUrl('');
                       setBookCharError('');
-                      setCast([]);
                     }}
                     className={[
                       'w-full text-left px-4 py-3 border-b border-pink-100 hover:bg-pink-50 transition',
@@ -889,28 +926,9 @@ export default function HeroSection() {
 
                       const chars = Array.isArray(json.characters) ? json.characters : null;
                       if (chars) {
-                        setCast(
-                          chars
-                            .map((c: any) => ({
-                              character_id: String(c.character_id || ''),
-                              character_name: String(c.character_name || ''),
-                            }))
-                            .filter((c: any) => c.character_id && c.character_name),
-                        );
+                        setCast(mapApiCharactersToCast(chars));
                       } else {
-                        setCastLoading(true);
-                        const r2 = await fetch(`/api/characters?book_id=${encodeURIComponent(selectedBookId)}`, { cache: 'no-store' });
-                        const j2 = await r2.json();
-                        if (r2.ok && j2?.success && Array.isArray(j2.characters)) {
-                          setCast(
-                            j2.characters
-                              .map((c: any) => ({
-                                character_id: String(c.character_id || ''),
-                                character_name: String(c.character_name || ''),
-                              }))
-                              .filter((c: any) => c.character_id && c.character_name),
-                          );
-                        }
+                        await loadCastForBook(selectedBookId);
                       }
 
                       setMissingStatus('Prepared.');
@@ -982,7 +1000,7 @@ export default function HeroSection() {
                         <button
                           type="button"
                           disabled={bookCharGenerating || bookSceneBusy || usageRemaining === 0}
-                          onClick={generateBookCharacter}
+                          onClick={() => generateBookCharacter()}
                           className="inline-flex w-full min-h-[44px] items-center justify-center gap-2 rounded-full bg-pink-950 px-4 py-3 text-sm font-medium text-white transition hover:bg-pink-900 disabled:opacity-50 sm:text-base"
                         >
                           <Sparkles className="h-4 w-4 shrink-0" />
@@ -1002,7 +1020,7 @@ export default function HeroSection() {
                             imageUrl={bookCharImageUrl}
                             altText={`Portrait of ${selectedCharName}`}
                             filename={`${selectedCharName.replace(/\s+/g, '-').toLowerCase()}-portrait.jpg`}
-                            onRegenerate={generateBookCharacter}
+                            onRegenerate={() => generateBookCharacter(true)}
                             regenerating={bookCharGenerating || bookSceneBusy}
                             onSceneVariant={generateBookSceneVariant}
                             sceneVariantBusy={bookSceneBusy}
@@ -1059,19 +1077,12 @@ export default function HeroSection() {
                         if (!res.ok || !json?.success) throw new Error(json?.error || 'Failed to add character');
                         setMissingStatus(`Added: ${json?.character?.character_name || name}`);
                         setMissingCharacterName('');
-
-                        setCastLoading(true);
-                        const r2 = await fetch(`/api/characters?book_id=${encodeURIComponent(selectedBookId)}`, { cache: 'no-store' });
-                        const j2 = await r2.json();
-                        if (r2.ok && j2?.success && Array.isArray(j2.characters)) {
-                          setCast(
-                            j2.characters
-                              .map((c: any) => ({
-                                character_id: String(c.character_id || ''),
-                                character_name: String(c.character_name || ''),
-                              }))
-                              .filter((c: any) => c.character_id && c.character_name),
-                          );
+                        const newId = String(json?.character?.character_id || '');
+                        const newName = String(json?.character?.character_name || name);
+                        await loadCastForBook(selectedBookId);
+                        if (newId) {
+                          setSelectedCharId(newId);
+                          setSelectedCharName(newName);
                         }
                       } catch (e: unknown) {
                         setMissingStatus(e instanceof Error ? e.message : 'Failed to add character');
@@ -1169,7 +1180,7 @@ export default function HeroSection() {
                   <button
                     type="button"
                     disabled={!customPrompt.trim() || customGenerating || customSceneBusy || usageRemaining === 0}
-                    onClick={generateCustomCharacter}
+                    onClick={() => generateCustomCharacter()}
                     className="bg-pink-950 hover:bg-pink-900 disabled:opacity-50 text-white px-5 py-3 rounded-full font-medium transition inline-flex items-center gap-2"
                   >
                     <Sparkles className="h-4 w-4" />
@@ -1189,7 +1200,7 @@ export default function HeroSection() {
                     imageUrl={customImageUrl}
                     altText="Generated portrait"
                     filename={`${(customName || 'portrait').replace(/\s+/g, '-').toLowerCase()}-portrait.jpg`}
-                    onRegenerate={generateCustomCharacter}
+                    onRegenerate={() => generateCustomCharacter(true)}
                     regenerating={customGenerating || customSceneBusy}
                     onSceneVariant={generateCustomSceneVariant}
                     sceneVariantBusy={customSceneBusy}

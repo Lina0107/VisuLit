@@ -1282,6 +1282,50 @@ def _decode_reference_image_base64(raw: str):
         return None
 
 
+def _fetch_reference_image_from_url(url: str):
+    """Download portrait bytes server-side (avoids browser CORS on provider URLs)."""
+    if not url or not isinstance(url, str):
+        return None
+    url = url.strip()
+    if not url.startswith(("http://", "https://")):
+        return None
+    try:
+        r = requests.get(url, timeout=60)
+        r.raise_for_status()
+        out = r.content
+        if not out or len(out) > MAX_REFERENCE_IMAGE_BYTES:
+            return None
+        return out
+    except Exception:
+        return None
+
+
+def _resolve_reference_image_bytes(data: dict):
+    """Base64 from client first, then server-side fetch from reference_image_url."""
+    ref_raw = (data.get("reference_image_base64") or "").strip()
+    ref_bytes = _decode_reference_image_base64(ref_raw)
+    if ref_bytes:
+        return ref_bytes
+    ref_url = (data.get("reference_image_url") or "").strip()
+    return _fetch_reference_image_from_url(ref_url)
+
+
+def _character_sort_key(c: dict):
+    src = c.get("source") or ""
+    role = c.get("role") or ""
+    name = (c.get("character_name") or "").lower()
+    src_rank = 0 if src == "gpt_prepare" else (1 if src == "user_added" else (2 if src == "verified" else 3))
+    role_rank = 0 if role == "main" else 1
+    return (src_rank, role_rank, name)
+
+
+def _characters_for_book(book_id: str) -> list:
+    all_chars = load_json(CHARACTERS_FILE, [])
+    book_chars = [c for c in all_chars if c.get("book_id") == book_id]
+    book_chars.sort(key=_character_sort_key)
+    return book_chars
+
+
 def _pick_neutral_appearance_snippet(character: dict, max_len: int = 140) -> str:
     """Prefer short appearance lines without strong distress wording (reduces 'always crying' bias)."""
     if not character:
@@ -1560,18 +1604,7 @@ def api_characters():
     if not book_id:
         return jsonify({"success": False, "error": "book_id required"}), 400
 
-    all_chars = load_json(CHARACTERS_FILE, [])
-    book_chars = [c for c in all_chars if c.get("book_id") == book_id]
-
-    def sort_key(c):
-        src = c.get("source") or ""
-        role = c.get("role") or ""
-        name = (c.get("character_name") or "").lower()
-        src_rank = 0 if src == "gpt_prepare" else (1 if src == "user_added" else (2 if src == "verified" else 3))
-        role_rank = 0 if role == "main" else 1
-        return (src_rank, role_rank, name)
-
-    book_chars.sort(key=sort_key)
+    book_chars = _characters_for_book(book_id)
     return jsonify({"success": True, "characters": book_chars, "count": len(book_chars)})
 
 
@@ -1592,17 +1625,17 @@ def api_prepare_book():
     if not book:
         return jsonify({"success": False, "error": "Book not found"}), 404
 
-    # cache
+    # cache — return ALL prepared characters (gpt_prepare + user_added), not gpt_prepare only
     all_chars = load_json(CHARACTERS_FILE, [])
-    existing = [c for c in all_chars if c.get("book_id") == book_id and c.get("source") == "gpt_prepare"]
-    if existing and not overwrite:
-        existing = sorted(existing, key=lambda c: (c.get("character_name") or "").lower())
+    existing_prepared = [c for c in all_chars if c.get("book_id") == book_id and c.get("source") == "gpt_prepare"]
+    if existing_prepared and not overwrite:
+        book_chars = _characters_for_book(book_id)
         return jsonify({
             "success": True,
             "cached": True,
-            "count": len(existing),
+            "count": len(book_chars),
             "eta_seconds": 0,
-            "characters": existing
+            "characters": book_chars
         })
 
     text_url = book.get("text_url")
@@ -1927,8 +1960,7 @@ def _api_generate_scene_variant(data: dict):
     character_name = (data.get("character_name") or "").strip()
     base_prompt_custom = (data.get("base_prompt") or "").strip()
 
-    ref_raw = (data.get("reference_image_base64") or "").strip()
-    ref_bytes = _decode_reference_image_base64(ref_raw)
+    ref_bytes = _resolve_reference_image_bytes(data)
 
     ch = None
     book = None
@@ -1961,37 +1993,39 @@ def _api_generate_scene_variant(data: dict):
     )
 
     user_id = get_user_id(request)
+    force_new = bool(data.get("force_new"))
 
     prompt_hash = hashlib.md5(
         ("scene_variant:" + description + json.dumps(scene_variant, sort_keys=True)).encode("utf-8")
     ).hexdigest()
     normalized_char_id = character_id or None
 
-    try:
-        history_items = load_json(HISTORY_FILE, [])
-        if isinstance(history_items, list):
-            for rec in reversed(history_items):
-                if not isinstance(rec, dict):
-                    continue
-                if rec.get("user_id") != user_id:
-                    continue
-                rec_char_id = rec.get("character_id") or None
-                if rec_char_id != normalized_char_id:
-                    continue
-                if rec.get("prompt_hash") == prompt_hash:
-                    image_url = rec.get("image_url")
-                    if image_url:
-                        remaining = get_remaining_today(user_id)
-                        return jsonify({
-                            "success": True,
-                            "image_url": image_url,
-                            "character_name": rec.get("character_name") or character_name,
-                            "remaining_free_count": remaining,
-                            "cached": True,
-                            "scene_variant": True,
-                        })
-    except Exception:
-        pass
+    if not force_new:
+        try:
+            history_items = load_json(HISTORY_FILE, [])
+            if isinstance(history_items, list):
+                for rec in reversed(history_items):
+                    if not isinstance(rec, dict):
+                        continue
+                    if rec.get("user_id") != user_id:
+                        continue
+                    rec_char_id = rec.get("character_id") or None
+                    if rec_char_id != normalized_char_id:
+                        continue
+                    if rec.get("prompt_hash") == prompt_hash:
+                        image_url = rec.get("image_url")
+                        if image_url:
+                            remaining = get_remaining_today(user_id)
+                            return jsonify({
+                                "success": True,
+                                "image_url": image_url,
+                                "character_name": rec.get("character_name") or character_name,
+                                "remaining_free_count": remaining,
+                                "cached": True,
+                                "scene_variant": True,
+                            })
+        except Exception:
+            pass
 
     allowed, remaining = check_and_update_usage(user_id)
     if not allowed:
@@ -2072,52 +2106,55 @@ def api_generate():
         return jsonify({"success": False, "error": "description required"}), 400
 
     user_id = get_user_id(request)
+    force_new = bool(data.get("force_new"))
 
     # Image cache (cost saving):
     # If we already generated the exact same image "prompt" (description) for this user,
     # return it without another API call and without incrementing usage.
+    # Skip when force_new=true (Regenerate button).
     prompt_hash = hashlib.md5(description.encode("utf-8")).hexdigest()
     normalized_char_id = character_id or None
-    try:
-        history_items = load_json(HISTORY_FILE, [])
-        if isinstance(history_items, list):
-            # search from newest to oldest for the latest matching record
-            for rec in reversed(history_items):
-                if not isinstance(rec, dict):
-                    continue
-                if rec.get("user_id") != user_id:
-                    continue
-                rec_char_id = rec.get("character_id") or None
-                if rec_char_id != normalized_char_id:
-                    continue
-                # Prefer cached prompt_hash if present, else compute from description
-                rec_ph = rec.get("prompt_hash")
-                if rec_ph and rec_ph == prompt_hash:
-                    image_url = rec.get("image_url")
-                    if image_url:
-                        remaining = get_remaining_today(user_id)
-                        return jsonify({
-                            "success": True,
-                            "image_url": image_url,
-                            "character_name": rec.get("character_name") or character_name,
-                            "remaining_free_count": remaining,
-                            "cached": True
-                        })
-                rec_desc = (rec.get("description") or "").strip()
-                if rec_desc and hashlib.md5(rec_desc.encode("utf-8")).hexdigest() == prompt_hash:
-                    image_url = rec.get("image_url")
-                    if image_url:
-                        remaining = get_remaining_today(user_id)
-                        return jsonify({
-                            "success": True,
-                            "image_url": image_url,
-                            "character_name": rec.get("character_name") or character_name,
-                            "remaining_free_count": remaining,
-                            "cached": True
-                        })
-    except Exception:
-        # Cache failure should not break generation flow.
-        pass
+    if not force_new:
+        try:
+            history_items = load_json(HISTORY_FILE, [])
+            if isinstance(history_items, list):
+                # search from newest to oldest for the latest matching record
+                for rec in reversed(history_items):
+                    if not isinstance(rec, dict):
+                        continue
+                    if rec.get("user_id") != user_id:
+                        continue
+                    rec_char_id = rec.get("character_id") or None
+                    if rec_char_id != normalized_char_id:
+                        continue
+                    # Prefer cached prompt_hash if present, else compute from description
+                    rec_ph = rec.get("prompt_hash")
+                    if rec_ph and rec_ph == prompt_hash:
+                        image_url = rec.get("image_url")
+                        if image_url:
+                            remaining = get_remaining_today(user_id)
+                            return jsonify({
+                                "success": True,
+                                "image_url": image_url,
+                                "character_name": rec.get("character_name") or character_name,
+                                "remaining_free_count": remaining,
+                                "cached": True
+                            })
+                    rec_desc = (rec.get("description") or "").strip()
+                    if rec_desc and hashlib.md5(rec_desc.encode("utf-8")).hexdigest() == prompt_hash:
+                        image_url = rec.get("image_url")
+                        if image_url:
+                            remaining = get_remaining_today(user_id)
+                            return jsonify({
+                                "success": True,
+                                "image_url": image_url,
+                                "character_name": rec.get("character_name") or character_name,
+                                "remaining_free_count": remaining,
+                                "cached": True
+                            })
+        except Exception:
+            # Cache failure should not break generation flow.
+            pass
 
     allowed, remaining = check_and_update_usage(user_id)
     if not allowed:
