@@ -1,5 +1,5 @@
 # app.py
-from flask import Flask, request, jsonify, make_response, render_template
+from flask import Flask, request, jsonify, make_response, render_template, send_file
 from flask_cors import CORS
 import json
 import os
@@ -31,6 +31,7 @@ CURATED_FILE = os.path.join(DATA_DIR, "curated_books.json")
 CHARACTERS_FILE = os.path.join(DATA_DIR, "characters.json")
 USAGE_FILE = os.path.join(DATA_DIR, "usage.json")
 HISTORY_FILE = os.path.join(DATA_DIR, "history.json")
+PORTRAITS_DIR = os.path.join(DATA_DIR, "portraits")
 
 DAILY_FREE_LIMIT = 5
 
@@ -39,6 +40,7 @@ AITUNNEL_BASE_URL = os.getenv("AITUNNEL_BASE_URL", "https://api.aitunnel.ru/v1")
 AITUNNEL_MODEL = os.getenv("AITUNNEL_MODEL", "gpt-4o-mini").strip()
 
 os.makedirs(DATA_DIR, exist_ok=True)
+os.makedirs(PORTRAITS_DIR, exist_ok=True)
 
 
 # -------------------- json helpers --------------------
@@ -1433,6 +1435,71 @@ def _extract_image_url_from_provider_json(img_data) -> str | None:
     return image_url
 
 
+def _portrait_filename(character_id: str) -> str:
+    safe = re.sub(r"[^a-zA-Z0-9._-]+", "_", (character_id or "").strip())
+    return (safe or "portrait") + ".jpg"
+
+
+def _portrait_public_path(character_id: str) -> str:
+    return f"/api/portraits/{_portrait_filename(character_id)}"
+
+
+def _get_canonical_portrait_url(character_id: str) -> str | None:
+    """Shared portrait for a book character — same image for all visitors."""
+    if not character_id:
+        return None
+    all_chars = load_json(CHARACTERS_FILE, [])
+    ch = next((c for c in all_chars if c.get("character_id") == character_id), None)
+    if not ch:
+        return None
+    url = (ch.get("canonical_portrait_url") or "").strip()
+    if not url:
+        return None
+    if url.startswith("/api/portraits/"):
+        disk_path = os.path.join(PORTRAITS_DIR, os.path.basename(url))
+        if os.path.isfile(disk_path):
+            return url
+        return None
+    return url
+
+
+def _set_canonical_portrait(character_id: str, image_url: str, prompt_hash: str) -> str:
+    """Save portrait bytes on disk and store stable URL on the character record."""
+    if not character_id or not image_url:
+        return image_url
+    filename = _portrait_filename(character_id)
+    disk_path = os.path.join(PORTRAITS_DIR, filename)
+    try:
+        if image_url.startswith("data:") and ";base64," in image_url:
+            raw = base64.standard_b64decode(image_url.split(";base64,", 1)[1])
+        elif image_url.startswith(("http://", "https://")):
+            r = requests.get(image_url, timeout=90)
+            r.raise_for_status()
+            raw = r.content
+        elif image_url.startswith("/api/portraits/"):
+            return image_url
+        else:
+            return image_url
+        if not raw or len(raw) > 8 * 1024 * 1024:
+            return image_url
+        with open(disk_path, "wb") as f:
+            f.write(raw)
+    except Exception:
+        app.logger.exception("canonical portrait persist failed for character_id=%s", character_id)
+        return image_url
+
+    public_url = _portrait_public_path(character_id)
+    all_chars = load_json(CHARACTERS_FILE, [])
+    for rec in all_chars:
+        if rec.get("character_id") == character_id:
+            rec["canonical_portrait_url"] = public_url
+            rec["canonical_portrait_prompt_hash"] = prompt_hash
+            rec["canonical_portrait_at"] = datetime.now(timezone.utc).isoformat()
+            break
+    save_json(CHARACTERS_FILE, all_chars)
+    return public_url
+
+
 def _call_image_provider(prompt: str, reference_bytes=None) -> str:
     image_model = os.getenv("IMAGE_MODEL", "gemini-3-pro-image-preview").strip()
     image_size = os.getenv("IMAGE_SIZE", "1024x1536").strip()
@@ -1464,6 +1531,18 @@ def home():
 @app.route("/favicon.ico")
 def favicon():
     return ("", 204)
+
+
+@app.route("/api/portraits/<path:filename>", methods=["GET"])
+def api_serve_portrait(filename):
+    if not re.fullmatch(r"[\w.-]+\.jpg", filename or ""):
+        return ("", 404)
+    disk_path = os.path.join(PORTRAITS_DIR, filename)
+    if not os.path.isfile(disk_path):
+        return ("", 404)
+    resp = make_response(send_file(disk_path, mimetype="image/jpeg"))
+    resp.headers["Cache-Control"] = "public, max-age=86400"
+    return resp
 
 
 @app.route("/api/health", methods=["GET"])
@@ -1605,7 +1684,9 @@ def api_characters():
         return jsonify({"success": False, "error": "book_id required"}), 400
 
     book_chars = _characters_for_book(book_id)
-    return jsonify({"success": True, "characters": book_chars, "count": len(book_chars)})
+    resp = make_response(jsonify({"success": True, "characters": book_chars, "count": len(book_chars)}))
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 
 @app.route("/api/prepare_book", methods=["POST"])
@@ -2108,12 +2189,28 @@ def api_generate():
     user_id = get_user_id(request)
     force_new = bool(data.get("force_new"))
 
-    # Image cache (cost saving):
-    # If we already generated the exact same image "prompt" (description) for this user,
-    # return it without another API call and without incrementing usage.
-    # Skip when force_new=true (Regenerate button).
     prompt_hash = hashlib.md5(description.encode("utf-8")).hexdigest()
     normalized_char_id = character_id or None
+
+    # Global canonical portrait: one face per book character for all visitors (unless Regenerate).
+    if normalized_char_id and not force_new:
+        canonical_url = _get_canonical_portrait_url(normalized_char_id)
+        if canonical_url:
+            remaining = get_remaining_today(user_id)
+            resp = make_response(jsonify({
+                "success": True,
+                "image_url": canonical_url,
+                "character_name": character_name,
+                "remaining_free_count": remaining,
+                "cached": True,
+                "canonical": True,
+            }))
+            if not request.cookies.get("user_id"):
+                resp.set_cookie("user_id", user_id, max_age=365 * 24 * 60 * 60)
+            return resp
+
+    # Per-user history cache (same browser, same prompt).
+    # Skip when force_new=true (Regenerate button).
     if not force_new:
         try:
             history_items = load_json(HISTORY_FILE, [])
@@ -2172,6 +2269,9 @@ def api_generate():
     except Exception as e:
         app.logger.exception("generate: image provider request failed for character_name=%s", character_name)
         return jsonify({"success": False, "error": f"Image generation failed: {type(e).__name__}: {str(e)}"}), 500
+
+    if normalized_char_id:
+        image_url = _set_canonical_portrait(normalized_char_id, image_url, prompt_hash)
 
     # save to per-user history (even for mock stage)
     source_type = "book" if character_id else "custom"

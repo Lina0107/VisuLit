@@ -1034,8 +1034,12 @@ export default function HeroSection() {
                       </div>
                     )}
                   </>
+                ) : !selectedBookId ? (
+                  <div className="mt-2 text-sm text-pink-950/60">Select a book above to load the cast.</div>
                 ) : (
-                  <div className="mt-2 text-sm text-pink-950/60">Prepare a book to see characters here.</div>
+                  <div className="mt-2 text-sm text-pink-950/60">
+                    No characters yet. Prepare the book, or add someone below — additions are saved for everyone on this site.
+                  </div>
                 )}
               </div>
             </div>
@@ -1048,7 +1052,7 @@ export default function HeroSection() {
               <div className="mt-2 rounded-2xl border border-pink-200 bg-white/70 p-4">
                 <div className="text-sm font-semibold text-pink-950">Didn't find someone in the cast?</div>
                 <div className="mt-1 text-sm text-pink-950/70">
-                  Type the character name exactly as it appears in the book. We'll search the text and add them to this page.
+                  Type the name as in the book. We search the text and add them to the shared cast — visible to all visitors, not just your browser.
                 </div>
                 <div className="mt-4 flex items-center gap-2 rounded-2xl border border-pink-200 bg-white/70 px-4 py-3">
                   <PenLine className="h-4 w-4 text-pink-700" />
