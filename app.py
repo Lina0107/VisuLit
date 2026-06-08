@@ -37,7 +37,7 @@ DAILY_FREE_LIMIT = 5
 
 AITUNNEL_API_KEY = os.getenv("AITUNNEL_API_KEY", "").strip()
 AITUNNEL_BASE_URL = os.getenv("AITUNNEL_BASE_URL", "https://api.aitunnel.ru/v1").strip()
-AITUNNEL_MODEL = os.getenv("AITUNNEL_MODEL", "gpt-4o-mini").strip()
+AITUNNEL_MODEL = os.getenv("AITUNNEL_MODEL", "gpt-4.1-mini").strip()
 
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(PORTRAITS_DIR, exist_ok=True)
@@ -154,6 +154,26 @@ def get_remaining_today(user_id):
         return DAILY_FREE_LIMIT
     used = int(usage[t].get(user_id, 0))
     return max(0, DAILY_FREE_LIMIT - used)
+
+
+def charge_generation_or_limit_response(user_id):
+    """
+    Deduct one daily generation before serving cache or calling the image API.
+    Cached/canonical hits count toward the limit too.
+    Returns (remaining, None) or (None, flask_response_tuple).
+    """
+    allowed, remaining = check_and_update_usage(user_id)
+    if not allowed:
+        return None, (
+            jsonify({
+                "success": False,
+                "error": "Daily generation limit reached",
+                "limit_reached": True,
+                "daily_limit": DAILY_FREE_LIMIT,
+            }),
+            403,
+        )
+    return remaining, None
 
 
 # -------------------- gutenberg cleaning --------------------
@@ -649,6 +669,29 @@ SITUATIONAL_PATTERNS = [
     re.compile(r"\b(shadow of a smile)\b", re.IGNORECASE),
 ]
 
+# Horror/action fragments that belong to a scene, not a calm literary portrait.
+PORTRAIT_ACTION_PATTERNS = [
+    re.compile(r"\b(blood|bloody|gore|smeared|smear|trickl\w*|stream of blood)\b", re.IGNORECASE),
+    re.compile(r"\b(my|your|his|her)\s+blood\s+(was|were|had|ran|run)\b", re.IGNORECASE),
+    re.compile(r"\b(champing|rage|fury|terror|scream|shriek|mad with)\b", re.IGNORECASE),
+    re.compile(r"\b(grasped|grasp|seized|struck|attacked|bit(?:ing)?|throttle)\b", re.IGNORECASE),
+]
+
+# Dramatic beats that name the character but are still not calm portrait material.
+PORTRAIT_SCENE_BEAT_PATTERNS = [
+    re.compile(r"\bred light of triumph in his eyes\b", re.IGNORECASE),
+    re.compile(r"\bkissing his hand to me\b", re.IGNORECASE),
+]
+
+_FEMALE_TITLE_RE = re.compile(
+    r"\b(miss|mrs|ms|madam|lady|queen|princess|duchess|countess|girl|woman|wife|mother|daughter|sister|aunt)\b",
+    re.IGNORECASE,
+)
+_MALE_TITLE_RE = re.compile(
+    r"\b(mr|lord|sir|count|king|prince|duke|baron|dr|doctor|husband|father|son|brother|uncle)\b",
+    re.IGNORECASE,
+)
+
 
 def is_visual_appearance_quote(snippet: str) -> bool:
     """
@@ -713,16 +756,48 @@ def is_visual_appearance_quote(snippet: str) -> bool:
     return qualifies
 
 
-def quote_describes_another_person(quote: str) -> bool:
+def _character_gender_hint(character_name: str, aliases: list | None) -> str | None:
+    """Rough gender hint from titles/names — used only to reject obvious pronoun mismatches."""
+    blob = " ".join([character_name or ""] + [str(a) for a in (aliases or []) if a])
+    has_f = bool(_FEMALE_TITLE_RE.search(blob))
+    has_m = bool(_MALE_TITLE_RE.search(blob))
+    if has_f and not has_m:
+        return "f"
+    if has_m and not has_f:
+        return "m"
+    return None
+
+
+def _quote_mentions_character(quote: str, character_name: str, aliases: list | None) -> bool:
+    if not quote:
+        return False
+    seen = set()
+    for raw in [character_name] + list(aliases or []):
+        name = (raw or "").strip()
+        if not name:
+            continue
+        key = name.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        if len(name) >= 6 or " " in name:
+            if re.search(rf"\b{re.escape(name)}\b", quote, re.IGNORECASE):
+                return True
+        elif len(name) >= 4:
+            if re.search(rf"\bthe\s+{re.escape(name)}\b", quote, re.IGNORECASE):
+                return True
+    return False
+
+
+def quote_describes_another_person(quote: str, character_name: str = "", aliases: list | None = None) -> bool:
     """
     Heuristic: narrator describing someone else's appearance.
-    E.g. 'I remember her as slim...', 'she had black hair'.
+    E.g. 'I remember her as slim...', 'Her face was ghastly...' (victim in a Dracula scene).
     Such quotes must not count as THIS character's own appearance.
     """
     if not quote or len(quote) < 20:
         return False
     q = quote.strip()
-    # Use IGNORECASE so lowercase 'i' and uppercase 'I' both match
     flags = re.IGNORECASE
     if re.search(r"\bI\s+remember\s+(her|him)\b", q, flags):
         return True
@@ -732,7 +807,57 @@ def quote_describes_another_person(quote: str) -> bool:
         return True
     if re.match(r"^(she|he)\s+(was|had|looked|appeared|seemed)\s+", q, flags):
         return True
+    mentions = _quote_mentions_character(q, character_name, aliases)
+    if re.match(r"^(her|his)\s+(face|lips|cheeks|throat|neck|hair|eyes|countenance|chin|brow|forehead)\b", q, flags):
+        if not mentions:
+            return True
+    if re.match(r"^the\s+(fair\s+)?(woman|man|lady|girl|boy)\b", q, flags) and not mentions:
+        return True
+    if re.search(r"\bby her side stood\b", q, flags) and not mentions:
+        return True
+    if re.search(r"\b(slender neck of the fair woman|fair woman and with)\b", q, flags):
+        return True
+
+    gh = _character_gender_hint(character_name, aliases)
+    if gh == "m" and re.match(r"^her\s+", q, flags) and not mentions:
+        return True
+    if gh == "f" and re.match(r"^his\s+", q, flags) and not mentions:
+        return True
     return False
+
+
+def quote_is_scene_beat_not_portrait(quote: str) -> bool:
+    if not quote:
+        return False
+    return any(p.search(quote) for p in PORTRAIT_SCENE_BEAT_PATTERNS)
+
+
+def quote_is_action_or_horror_scene(quote: str, character_name: str = "", aliases: list | None = None) -> bool:
+    """Blood, violence, or horror staging — not a stable portrait line unless it names this character."""
+    if not quote:
+        return False
+    if quote_is_scene_beat_not_portrait(quote):
+        return True
+    if not any(p.search(quote) for p in PORTRAIT_ACTION_PATTERNS):
+        return False
+    return not _quote_mentions_character(quote, character_name, aliases)
+
+
+def is_portrait_worthy_quote(
+    quote: str,
+    character_name: str = "",
+    aliases: list | None = None,
+) -> bool:
+    """Full gate for appearance quotes used in portraits and stored on characters."""
+    if not is_visual_appearance_quote(quote):
+        return False
+    if quote_describes_another_person(quote, character_name, aliases):
+        return False
+    if quote_is_action_or_horror_scene(quote, character_name, aliases):
+        return False
+    if any(p.search(quote) for p in SITUATIONAL_PATTERNS):
+        return False
+    return True
 
 
 def _has_any(sn_l: str, words) -> bool:
@@ -762,7 +887,13 @@ def _appearance_groups(quote_text: str) -> dict:
     return {"core": bool(core), "body": bool(body), "clothes": bool(clothes), "color": bool(color)}
 
 
-def select_appearance_quotes_from_candidates(candidates: list, max_quotes: int = 6) -> list:
+def select_appearance_quotes_from_candidates(
+    candidates: list,
+    max_quotes: int = 6,
+    *,
+    character_name: str = "",
+    aliases: list | None = None,
+) -> list:
     """
     Deterministic quote selection with group coverage.
     This keeps both portrait features (face/eyes/hair) and supporting details (figure/height/clothes/color).
@@ -780,9 +911,7 @@ def select_appearance_quotes_from_candidates(candidates: list, max_quotes: int =
         qt = (c.get("quote") or "").strip()
         if not qt:
             continue
-        if not is_visual_appearance_quote(qt):
-            continue
-        if quote_describes_another_person(qt):
+        if not is_portrait_worthy_quote(qt, character_name, aliases):
             continue
 
         g = _appearance_groups(qt)
@@ -1032,6 +1161,8 @@ def build_appearance_candidates(full_text: str, characters, max_per_char=28):
 
             if snippet.lower() in seen_quotes:
                 continue
+            if not is_portrait_worthy_quote(snippet, name, aliases):
+                continue
             seen_quotes.add(snippet.lower())
 
             # Score how "canonical" (stable/portrait-worthy) vs situational this snippet is
@@ -1097,7 +1228,8 @@ def choose_appearance_quotes_with_gpt(book_title: str, characters, appearance_ca
         "  - Situational dirt/mess ('muddy petticoat', 'untidy after a walk') — these describe a moment, not the character.\n"
         "  - Pure dialogue with no stable visual detail.\n"
         "  - Pure emotion/action/personality (no body description).\n"
-        "  - Describes ANOTHER person's looks ('I remember her as slim...').\n"
+        "  - Describes ANOTHER person's looks ('I remember her as slim...', 'Her face was ghastly...').\n"
+        "  - Horror/action staging: blood on lips/throat, victims, rage, biting, grasping — not a calm portrait.\n"
         "  - Coincidental appearance words ('old friend', 'fair price', 'dark mood').\n"
         "If multiple candidates describe the SAME feature (e.g. two quotes both about 'fine eyes'),\n"
         "  pick the one with more detail; skip the other.\n"
@@ -1118,19 +1250,267 @@ def choose_appearance_quotes_with_gpt(book_title: str, characters, appearance_ca
 
     raw = _safe_json_from_model(content)
 
+    char_aliases = {
+        (ch.get("canonical_name") or "").strip(): ch.get("aliases") or []
+        for ch in characters
+        if (ch.get("canonical_name") or "").strip()
+    }
+
     # Reconstruct actual quotes from indices
     result = {"appearance": []}
     for item in raw.get("appearance", []):
         name = (item.get("canonical_name") or "").strip()
         indices = item.get("selected_indices") or []
         candidates = appearance_candidates_map.get(name, [])
+        aliases = char_aliases.get(name, [])
         aq = []
         for idx in indices:
             if isinstance(idx, int) and 0 <= idx < len(candidates):
                 c = candidates[idx]
-                aq.append({"quote": c["quote"], "location": c.get("location", "unknown")})
+                txt = (c.get("quote") or "").strip()
+                if txt and is_portrait_worthy_quote(txt, name, aliases):
+                    aq.append({"quote": txt, "location": c.get("location", "unknown")})
         result["appearance"].append({"canonical_name": name, "appearance_quotes": aq})
     return result
+
+
+_GPT_VALIDATE_APPEARANCE_PROMPT = (
+    "You audit appearance quotes for an AI PORTRAIT tool (calm literary head-and-shoulders image).\n"
+    "For EACH quote below, decide if it describes THE NAMED CHARACTER's own stable physical appearance "
+    "(face, hair, eyes, age, build, typical clothing) — not a scene, victim, or metaphor.\n\n"
+    "REJECT if:\n"
+    "- Describes ANOTHER person's body/face (e.g. 'Her face was ghastly…' for Count Dracula)\n"
+    "- Horror/action staging: blood on lips/throat, biting, grasping a neck, terror, gore\n"
+    "- Figurative language only ('my blood ran cold', 'blood congealed with horror')\n"
+    "- Plot/dialogue with no portrait-worthy visual detail of THIS character\n"
+    "- Only bystanders or crowd; character named nearby but not described\n\n"
+    "ACCEPT if:\n"
+    "- Stable features of THIS character: eyes, hair, complexion, scar, build, usual dress\n"
+    "- 'Like the Count' when the character IS the Count; direct 'his face', 'her eyes' when clearly this character\n\n"
+    "Return STRICT JSON only:\n"
+    '{"characters":[{"canonical_name":"str","keep_indices":[0,2]}]}\n'
+    "keep_indices refer to the quotes array for that character (0-based). Use [] if none are safe.\n"
+)
+
+
+def validate_appearance_quotes_batch_with_gpt(book_title: str, characters_with_quotes: list) -> dict:
+    """
+    GPT pass 2 — auditor for one or many characters in a single call.
+    characters_with_quotes: [{canonical_name, aliases, quotes:[{quote, location}]}]
+    Returns: {normalized_canonical_name: [filtered quote dicts]}
+    """
+    if not characters_with_quotes or not AITUNNEL_API_KEY:
+        return {}
+
+    payload_chars = []
+    quote_pools = {}  # norm_name -> list of original quote dicts (heuristic-prefiltered)
+
+    for ch in characters_with_quotes:
+        name = (ch.get("canonical_name") or ch.get("character_name") or "").strip()
+        if not name:
+            continue
+        aliases = ch.get("aliases") or []
+        pool = []
+        for q in ch.get("quotes") or ch.get("appearance_quotes") or []:
+            if not isinstance(q, dict):
+                continue
+            txt = (q.get("quote") or "").strip()
+            if not txt or not is_portrait_worthy_quote(txt, name, aliases):
+                continue
+            pool.append({"quote": txt, "location": (q.get("location") or "unknown").strip()})
+        if not pool:
+            continue
+        norm = normalize_name(name)
+        quote_pools[norm] = pool
+        payload_chars.append({
+            "canonical_name": name,
+            "aliases": aliases[:8],
+            "quotes": [{"idx": i, "text": q["quote"][:220]} for i, q in enumerate(pool)],
+        })
+
+    if not payload_chars:
+        return {}
+
+    content = call_aitunnel(
+        [
+            {"role": "system", "content": "You are a careful literature analyst. Return ONLY valid JSON."},
+            {
+                "role": "user",
+                "content": _GPT_VALIDATE_APPEARANCE_PROMPT
+                + f'\nBook: "{book_title}"\n\nINPUT:\n'
+                + json.dumps({"characters": payload_chars}, ensure_ascii=False),
+            },
+        ],
+        max_tokens=min(1800, 200 * len(payload_chars) + 400),
+        temperature=0.05,
+        json_mode=True,
+    )
+    raw = _safe_json_from_model(content)
+    out = {}
+    for item in raw.get("characters", []):
+        name = (item.get("canonical_name") or "").strip()
+        if not name:
+            continue
+        norm = normalize_name(name)
+        pool = quote_pools.get(norm, [])
+        keep = []
+        for idx in item.get("keep_indices") or []:
+            if isinstance(idx, int) and 0 <= idx < len(pool):
+                keep.append(pool[idx])
+        out[norm] = keep
+    return out
+
+
+def _merge_appearance_quote_lists(*sources, character_name: str = "", aliases=None, max_items: int = 12) -> list:
+    """Dedupe quote dicts preserving order."""
+    merged = []
+    seen = set()
+    for src in sources:
+        if not src:
+            continue
+        for q in src:
+            if not isinstance(q, dict):
+                continue
+            txt = (q.get("quote") or "").strip()
+            if not txt:
+                continue
+            key = txt.lower()
+            if key in seen:
+                continue
+            if not is_portrait_worthy_quote(txt, character_name, aliases):
+                continue
+            seen.add(key)
+            merged.append({
+                "quote": txt,
+                "location": (q.get("location") or "unknown").strip(),
+            })
+            if len(merged) >= max_items:
+                return merged
+    return merged
+
+
+def resolve_appearance_quotes_for_character(
+    book_title: str,
+    mc: dict,
+    candidates: list,
+    *,
+    max_quotes: int = 6,
+    use_gpt: bool = True,
+) -> list:
+    """
+    Full pipeline: heuristic shortlist → GPT selection → heuristic merge → GPT audit.
+  Falls back to heuristics if GPT is unavailable or fails.
+    """
+    name = (mc.get("canonical_name") or mc.get("character_name") or "").strip()
+    aliases = mc.get("aliases") or []
+    if not name:
+        return []
+
+    heuristic = select_appearance_quotes_from_candidates(
+        candidates,
+        max_quotes=max(max_quotes, 8),
+        character_name=name,
+        aliases=aliases,
+    )
+
+    if not use_gpt or not AITUNNEL_API_KEY:
+        return heuristic[:max_quotes]
+
+    gpt_selected = []
+    try:
+        gpt_pack = choose_appearance_quotes_with_gpt(book_title, [mc], {name: candidates})
+        for item in gpt_pack.get("appearance", []):
+            if normalize_name(item.get("canonical_name") or "") == normalize_name(name):
+                gpt_selected = item.get("appearance_quotes") or []
+                break
+    except Exception:
+        app.logger.exception("GPT appearance selection failed for %s", name)
+
+    merged = _merge_appearance_quote_lists(
+        gpt_selected,
+        heuristic,
+        character_name=name,
+        aliases=aliases,
+        max_items=max(max_quotes, 10),
+    )
+    if not merged:
+        return []
+
+    try:
+        validated = validate_appearance_quotes_batch_with_gpt(
+            book_title,
+            [{"canonical_name": name, "aliases": aliases, "quotes": merged}],
+        )
+        final = validated.get(normalize_name(name), [])
+        if final:
+            return final[:max_quotes]
+    except Exception:
+        app.logger.exception("GPT appearance validation failed for %s", name)
+
+    return merged[:max_quotes]
+
+
+def audit_appearance_quotes_heuristic(all_chars: list | None = None) -> dict:
+    """Scan all stored characters for weak/missing/suspect appearance quotes (no GPT cost)."""
+    chars = all_chars if all_chars is not None else load_json(CHARACTERS_FILE, [])
+    if not isinstance(chars, list):
+        chars = []
+
+    issues = []
+    zero_quotes = 0
+    suspect_kw = re.compile(
+        r"\b(blood|bloody|Her face was|I remember her|my blood was|champing|mad with terror)\b",
+        re.IGNORECASE,
+    )
+
+    for rec in chars:
+        if not isinstance(rec, dict):
+            continue
+        name = (rec.get("character_name") or "").strip()
+        book_id = rec.get("book_id") or ""
+        aliases = rec.get("aliases") or []
+        apq = rec.get("appearance_quotes") or []
+
+        if not apq:
+            zero_quotes += 1
+            issues.append({
+                "character_name": name,
+                "book_id": book_id,
+                "issue": "no_appearance_quotes",
+            })
+            continue
+
+        for q in apq:
+            txt = (q.get("quote") or "").strip()
+            if not txt:
+                continue
+            if not is_portrait_worthy_quote(txt, name, aliases):
+                issues.append({
+                    "character_name": name,
+                    "book_id": book_id,
+                    "issue": "fails_heuristic_filter",
+                    "quote_preview": txt[:140],
+                })
+            elif suspect_kw.search(txt):
+                issues.append({
+                    "character_name": name,
+                    "book_id": book_id,
+                    "issue": "suspect_keywords",
+                    "quote_preview": txt[:140],
+                })
+
+    by_book = {}
+    for it in issues:
+        bid = it.get("book_id") or "unknown"
+        by_book[bid] = by_book.get(bid, 0) + 1
+
+    return {
+        "total_characters": len(chars),
+        "zero_appearance_quotes": zero_quotes,
+        "issue_count": len(issues),
+        "issues_by_book": by_book,
+        "issues": issues[:500],
+    }
 
 
 # -------------------- prompt builder for image generation (no extra GPT calls) --------------------
@@ -1140,6 +1520,13 @@ _ANTI_CELEBRITY_BLOCK = (
     "actor, model, or public figure. Do NOT copy any film, TV, stage, or book-cover adaptation, "
     "movie poster, or actor who played this character. No named-person likeness. "
     "Follow ONLY the quoted novel text below for face, hair, age, and clothing — not pop-culture memory."
+)
+
+_ANTI_HALLUCINATION_BLOCK = (
+    " PORTRAIT SAFETY: Calm literary portrait — not an action scene or horror still. "
+    "Do NOT add blood, gore, wounds, fangs, supernatural makeup, or victim imagery "
+    "unless the quoted lines above explicitly describe THIS character's own stable features that way. "
+    "Ignore horror-movie, vampire, and adaptation stereotypes not supported by the quotes."
 )
 
 
@@ -1215,10 +1602,12 @@ def build_auto_description_from_character(book: dict, character: dict, max_quote
         score += min(len(txt) // 80, 6)
         return score
 
+    char_aliases = character.get("aliases") or []
+
     appearance_texts = []
     for q in appearance_quotes:
         txt = (q.get("quote") or "").strip() if isinstance(q, dict) else str(q).strip()
-        if txt:
+        if txt and is_portrait_worthy_quote(txt, name, char_aliases):
             appearance_texts.append(txt)
 
     evidence_texts = []
@@ -1262,7 +1651,7 @@ def build_auto_description_from_character(book: dict, character: dict, max_quote
         " Neutral painterly background, no cartoonish or illustrated look."
     )
 
-    return header + "." + quotes_part + style_hint + _ANTI_CELEBRITY_BLOCK
+    return header + "." + quotes_part + style_hint + _ANTI_CELEBRITY_BLOCK + _ANTI_HALLUCINATION_BLOCK
 
 
 # -------------------- scene variant (same identity, new pose / emotion / setting) --------------------
@@ -1345,13 +1734,37 @@ def _characters_for_book(book_id: str) -> list:
     return book_chars
 
 
+def filter_stored_appearance_quotes(character: dict) -> list:
+    """Drop portrait-unsafe lines already saved on a character record."""
+    name = (character.get("character_name") or "").strip()
+    aliases = character.get("aliases") or []
+    out = []
+    for q in character.get("appearance_quotes") or []:
+        if not isinstance(q, dict):
+            continue
+        txt = (q.get("quote") or "").strip()
+        if not txt:
+            continue
+        if not is_portrait_worthy_quote(txt, name, aliases):
+            continue
+        out.append({
+            "quote": txt,
+            "location": (q.get("location") or "unknown").strip(),
+        })
+    return out
+
+
 def _pick_neutral_appearance_snippet(character: dict, max_len: int = 140) -> str:
     """Prefer short appearance lines without strong distress wording (reduces 'always crying' bias)."""
     if not character:
         return ""
+    name = (character.get("character_name") or "").strip()
+    aliases = character.get("aliases") or []
     for q in character.get("appearance_quotes") or []:
         txt = (q.get("quote") or "").strip() if isinstance(q, dict) else str(q).strip()
         if not txt or _SCENE_NEG_WORDS.search(txt):
+            continue
+        if not is_portrait_worthy_quote(txt, name, aliases):
             continue
         if len(txt) > max_len:
             txt = txt[:max_len].rsplit(" ", 1)[0] + "…"
@@ -1436,7 +1849,7 @@ def build_scene_variant_prompt(
     return (
         f"{header}\n{identity_lock}\n"
         f"Vary the scene as follows:\n{changes_txt}"
-        f"{literary_part}{custom_part}{style_hint}{_ANTI_CELEBRITY_BLOCK}"
+        f"{literary_part}{custom_part}{style_hint}{_ANTI_CELEBRITY_BLOCK}{_ANTI_HALLUCINATION_BLOCK}"
     )
 
 
@@ -1487,6 +1900,10 @@ def _set_canonical_portrait(character_id: str, image_url: str, prompt_hash: str)
     """Save portrait bytes on disk and store stable URL on the character record."""
     if not character_id or not image_url:
         return image_url
+    # Once a shared canonical exists, never overwrite (Regenerate / personal variants must not change it).
+    existing = _get_canonical_portrait_url(character_id)
+    if existing:
+        return existing
     filename = _portrait_filename(character_id)
     disk_path = os.path.join(PORTRAITS_DIR, filename)
     try:
@@ -1518,6 +1935,34 @@ def _set_canonical_portrait(character_id: str, image_url: str, prompt_hash: str)
             break
     save_json(CHARACTERS_FILE, all_chars)
     return public_url
+
+
+def _clear_canonical_portrait(character_id: str) -> bool:
+    """Remove shared portrait for a book character so the next Generate creates a new one."""
+    if not character_id:
+        return False
+    all_chars = load_json(CHARACTERS_FILE, [])
+    found = False
+    for rec in all_chars:
+        if rec.get("character_id") != character_id:
+            continue
+        found = True
+        url = (rec.get("canonical_portrait_url") or "").strip()
+        if url.startswith("/api/portraits/"):
+            disk_path = os.path.join(PORTRAITS_DIR, os.path.basename(url))
+            try:
+                if os.path.isfile(disk_path):
+                    os.remove(disk_path)
+            except OSError:
+                app.logger.exception("failed to delete canonical portrait file for %s", character_id)
+        rec.pop("canonical_portrait_url", None)
+        rec.pop("canonical_portrait_prompt_hash", None)
+        rec.pop("canonical_portrait_at", None)
+        break
+    if not found:
+        return False
+    save_json(CHARACTERS_FILE, all_chars)
+    return True
 
 
 def _call_image_provider(prompt: str, reference_bytes=None) -> str:
@@ -1777,15 +2222,21 @@ def api_prepare_book():
     # STEP B: appearance candidates from FULL text
     appearance_candidates_map = build_appearance_candidates(text, main_chars, max_per_char=28)
 
-    # STEP C (no-GPT): select best appearance quotes ONLY from candidates.
-    # We skip GPT selection here because it can over-reject valid "portrait-worthy"
-    # lines even when strong candidates exist.
+    # STEP C: heuristic shortlist + GPT selection + GPT audit (double AI check when API key set).
+    use_gpt = bool(data.get("use_gpt", True))
+    book_title = book.get("title") or ""
     chosen_map = {}
     for mc in main_chars:
         name_key = (mc.get("canonical_name") or "").strip()
         canonical = normalize_name(name_key)
         candidates = appearance_candidates_map.get(name_key, []) if name_key else []
-        chosen_map[canonical] = select_appearance_quotes_from_candidates(candidates, max_quotes=6) if canonical else []
+        chosen_map[canonical] = resolve_appearance_quotes_for_character(
+            book_title,
+            mc,
+            candidates,
+            max_quotes=6,
+            use_gpt=use_gpt,
+        ) if canonical else []
 
     # overwrite old prepared
     if overwrite:
@@ -1840,9 +2291,7 @@ def api_prepare_book():
                     quote_text = (q.get("quote") or "").strip()
                     if not quote_text:
                         continue
-                    if not is_visual_appearance_quote(quote_text):
-                        continue
-                    if quote_describes_another_person(quote_text):
+                    if not is_portrait_worthy_quote(quote_text, canonical, aliases_norm):
                         continue
                     apq.append({
                         "quote": quote_text,
@@ -1877,20 +2326,111 @@ def api_prepare_book():
         "cached": False,
         "count": len(saved),
         "eta_seconds": eta,
+        "use_gpt": use_gpt,
         "characters": saved
+    })
+
+
+@app.route("/api/audit_appearance_quotes", methods=["GET"])
+def api_audit_appearance_quotes():
+    """Heuristic audit of all stored appearance quotes (no GPT cost)."""
+    book_id = (request.args.get("book_id") or "").strip()
+    all_chars = load_json(CHARACTERS_FILE, [])
+    if book_id:
+        all_chars = [c for c in all_chars if c.get("book_id") == book_id]
+    report = audit_appearance_quotes_heuristic(all_chars)
+    return jsonify({"success": True, **report})
+
+
+@app.route("/api/sanitize_appearance_quotes", methods=["POST"])
+def api_sanitize_appearance_quotes():
+    """
+    Re-filter appearance_quotes already stored in characters.json (no book re-download).
+    Heuristic pass always; optional GPT audit pass when use_gpt=true and API key is set.
+    """
+    data = request.get_json(silent=True) or {}
+    book_id = (data.get("book_id") or "").strip()
+    use_gpt = bool(data.get("use_gpt", False))
+
+    all_books = load_json(BOOKS_FILE, [])
+    books_by_id = {b.get("book_id"): b for b in all_books if b.get("book_id")}
+
+    all_chars = load_json(CHARACTERS_FILE, [])
+    characters_updated = 0
+    quotes_removed = 0
+    gpt_validated = 0
+
+    targets = [c for c in all_chars if not book_id or c.get("book_id") == book_id]
+    by_book = {}
+    for rec in targets:
+        bid = rec.get("book_id") or ""
+        by_book.setdefault(bid, []).append(rec)
+
+    for bid, recs in by_book.items():
+        book = books_by_id.get(bid) or {}
+        book_title = book.get("title") or bid or "Unknown book"
+        gpt_batch = None
+        if use_gpt and AITUNNEL_API_KEY:
+            try:
+                gpt_batch = validate_appearance_quotes_batch_with_gpt(
+                    book_title,
+                    [
+                        {
+                            "canonical_name": r.get("character_name") or "",
+                            "aliases": r.get("aliases") or [],
+                            "quotes": filter_stored_appearance_quotes(r),
+                        }
+                        for r in recs
+                    ],
+                )
+            except Exception:
+                app.logger.exception("GPT sanitize batch failed for book_id=%s", bid)
+
+        for rec in recs:
+            before = len(rec.get("appearance_quotes") or [])
+            filtered = filter_stored_appearance_quotes(rec)
+            norm = normalize_name(rec.get("character_name") or "")
+            if gpt_batch is not None and norm in gpt_batch:
+                filtered = gpt_batch[norm]
+                gpt_validated += 1
+            old_texts = {
+                (q.get("quote") or "").strip()
+                for q in (rec.get("appearance_quotes") or [])
+                if isinstance(q, dict)
+            }
+            new_texts = {
+                (q.get("quote") or "").strip()
+                for q in filtered
+                if isinstance(q, dict) and (q.get("quote") or "").strip()
+            }
+            if new_texts != old_texts:
+                rec["appearance_quotes"] = filtered
+                characters_updated += 1
+                quotes_removed += max(0, before - len(filtered))
+
+    if characters_updated:
+        save_json(CHARACTERS_FILE, all_chars)
+
+    return jsonify({
+        "success": True,
+        "characters_updated": characters_updated,
+        "quotes_removed": quotes_removed,
+        "gpt_validated_characters": gpt_validated,
+        "book_id": book_id or None,
     })
 
 
 @app.route("/api/reselect_appearance_quotes", methods=["POST"])
 def api_reselect_appearance_quotes():
     """
-    Re-run ONLY the deterministic appearance-quote selection step (no GPT).
-    Helps fix portrait quality without paying for full prepare_book again.
+    Re-run appearance-quote selection from book text.
+    Default: heuristic + GPT selection + GPT audit (use_gpt=false for heuristics only).
     """
     data = request.get_json(silent=True) or {}
     book_id = (data.get("book_id") or "").strip()
     max_per_char = int(data.get("max_per_char") or 28)
     max_quotes = int(data.get("max_quotes") or 6)
+    use_gpt = bool(data.get("use_gpt", True))
 
     if not book_id:
         return jsonify({"success": False, "error": "book_id required"}), 400
@@ -1928,12 +2468,19 @@ def api_reselect_appearance_quotes():
 
     appearance_candidates_map = build_appearance_candidates(text, builder_chars, max_per_char=max_per_char)
 
+    book_title = book.get("title") or ""
     chosen_map = {}
     for mc in builder_chars:
         name_key = (mc.get("canonical_name") or "").strip()
         canonical = normalize_name(name_key)
         candidates = appearance_candidates_map.get(name_key, []) if name_key else []
-        chosen_map[canonical] = select_appearance_quotes_from_candidates(candidates, max_quotes=max_quotes) if canonical else []
+        chosen_map[canonical] = resolve_appearance_quotes_for_character(
+            book_title,
+            mc,
+            candidates,
+            max_quotes=max_quotes,
+            use_gpt=use_gpt,
+        ) if canonical else []
 
     updated = 0
     for rec in all_chars:
@@ -1946,7 +2493,7 @@ def api_reselect_appearance_quotes():
         updated += 1
 
     save_json(CHARACTERS_FILE, all_chars)
-    return jsonify({"success": True, "updated": updated})
+    return jsonify({"success": True, "updated": updated, "use_gpt": use_gpt})
 
 
 @app.route("/api/add_character", methods=["POST"])
@@ -1997,7 +2544,13 @@ def api_add_character():
     name_key = (single_char[0].get("canonical_name") or "").strip()
     canonical = normalize_name(name_key)
     candidates = appearance_candidates_map.get(name_key, []) if name_key else []
-    chosen_map[canonical] = select_appearance_quotes_from_candidates(candidates, max_quotes=6) if canonical else []
+    chosen_map[canonical] = resolve_appearance_quotes_for_character(
+        book.get("title") or "",
+        single_char[0],
+        candidates,
+        max_quotes=6,
+        use_gpt=bool(AITUNNEL_API_KEY),
+    ) if canonical else []
 
     mc = single_char[0]
     canonical = normalize_name((mc.get("canonical_name") or "").strip())
@@ -2100,6 +2653,10 @@ def _api_generate_scene_variant(data: dict):
     user_id = get_user_id(request)
     force_new = bool(data.get("force_new"))
 
+    remaining, limit_resp = charge_generation_or_limit_response(user_id)
+    if limit_resp:
+        return limit_resp
+
     prompt_hash = hashlib.md5(
         ("scene_variant:" + description + json.dumps(scene_variant, sort_keys=True)).encode("utf-8")
     ).hexdigest()
@@ -2120,26 +2677,19 @@ def _api_generate_scene_variant(data: dict):
                     if rec.get("prompt_hash") == prompt_hash:
                         image_url = rec.get("image_url")
                         if image_url:
-                            remaining = get_remaining_today(user_id)
-                            return jsonify({
+                            resp = make_response(jsonify({
                                 "success": True,
                                 "image_url": image_url,
                                 "character_name": rec.get("character_name") or character_name,
                                 "remaining_free_count": remaining,
                                 "cached": True,
                                 "scene_variant": True,
-                            })
+                            }))
+                            if not request.cookies.get("user_id"):
+                                resp.set_cookie("user_id", user_id, max_age=365 * 24 * 60 * 60)
+                            return resp
         except Exception:
             pass
-
-    allowed, remaining = check_and_update_usage(user_id)
-    if not allowed:
-        return jsonify({
-            "success": False,
-            "error": "Daily generation limit reached",
-            "limit_reached": True,
-            "daily_limit": DAILY_FREE_LIMIT,
-        }), 403
 
     try:
         image_url = _call_image_provider(description, provider_ref_bytes)
@@ -2180,6 +2730,19 @@ def _api_generate_scene_variant(data: dict):
     return resp
 
 
+@app.route("/api/reset_canonical_portrait", methods=["POST"])
+def api_reset_canonical_portrait():
+    """Clear the shared site-wide portrait for a book character (bad face stuck on canonical)."""
+    data = request.get_json(silent=True) or {}
+    character_id = (data.get("character_id") or "").strip()
+    if not character_id:
+        return jsonify({"success": False, "error": "character_id required"}), 400
+    ok = _clear_canonical_portrait(character_id)
+    if not ok:
+        return jsonify({"success": False, "error": "Character not found or no canonical portrait"}), 404
+    return jsonify({"success": True, "character_id": character_id})
+
+
 @app.route("/api/generate", methods=["POST"])
 def api_generate():
     data = request.get_json(silent=True) or {}
@@ -2213,6 +2776,10 @@ def api_generate():
     user_id = get_user_id(request)
     force_new = bool(data.get("force_new"))
 
+    remaining, limit_resp = charge_generation_or_limit_response(user_id)
+    if limit_resp:
+        return limit_resp
+
     prompt_hash = hashlib.md5(description.encode("utf-8")).hexdigest()
     normalized_char_id = character_id or None
 
@@ -2220,7 +2787,6 @@ def api_generate():
     if normalized_char_id and not force_new:
         canonical_url = _get_canonical_portrait_url(normalized_char_id)
         if canonical_url:
-            remaining = get_remaining_today(user_id)
             resp = make_response(jsonify({
                 "success": True,
                 "image_url": canonical_url,
@@ -2253,38 +2819,33 @@ def api_generate():
                     if rec_ph and rec_ph == prompt_hash:
                         image_url = rec.get("image_url")
                         if image_url:
-                            remaining = get_remaining_today(user_id)
-                            return jsonify({
+                            resp = make_response(jsonify({
                                 "success": True,
                                 "image_url": image_url,
                                 "character_name": rec.get("character_name") or character_name,
                                 "remaining_free_count": remaining,
-                                "cached": True
-                            })
+                                "cached": True,
+                            }))
+                            if not request.cookies.get("user_id"):
+                                resp.set_cookie("user_id", user_id, max_age=365 * 24 * 60 * 60)
+                            return resp
                     rec_desc = (rec.get("description") or "").strip()
                     if rec_desc and hashlib.md5(rec_desc.encode("utf-8")).hexdigest() == prompt_hash:
                         image_url = rec.get("image_url")
                         if image_url:
-                            remaining = get_remaining_today(user_id)
-                            return jsonify({
+                            resp = make_response(jsonify({
                                 "success": True,
                                 "image_url": image_url,
                                 "character_name": rec.get("character_name") or character_name,
                                 "remaining_free_count": remaining,
-                                "cached": True
-                            })
+                                "cached": True,
+                            }))
+                            if not request.cookies.get("user_id"):
+                                resp.set_cookie("user_id", user_id, max_age=365 * 24 * 60 * 60)
+                            return resp
         except Exception:
             # Cache failure should not break generation flow.
             pass
-
-    allowed, remaining = check_and_update_usage(user_id)
-    if not allowed:
-        return jsonify({
-            "success": False,
-            "error": "Daily generation limit reached",
-            "limit_reached": True,
-            "daily_limit": DAILY_FREE_LIMIT
-        }), 403
 
     try:
         image_url = _call_image_provider(description, None)

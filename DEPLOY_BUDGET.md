@@ -52,13 +52,16 @@ If your local `data/` folder is present, copy it too.
 In the project root on the VPS, create a `.env` file and set:
 - `AITUNNEL_API_KEY=...`
 - `AITUNNEL_BASE_URL=...` (example: `https://neuroapi.host/v1/`)
-- `AITUNNEL_MODEL=gemini-...` (for text is your chosen model)
+- `AITUNNEL_MODEL=gpt-4.1-mini` (text: cast + quotes; not the image model)
 - `DOMAIN=yourdomain.com`
 - `CADDY_EMAIL=you@example.com`
 
-Optional:
-- `IMAGE_MODEL=gemini-3-pro-image-preview`
+Optional image model (`IMAGE_MODEL`, see `.env.example`):
+- **`gemini-3-pro-image-preview`** (Nano Banana Pro) — default; better for long quote-based prompts and “no celebrity / no gore” rules.
+- **`gemini-3.1-flash-image`** (Nano Banana 2) — ~45% cheaper per image on NeuroAPI; try on staging first (more film-vampire bias risk).
 - `IMAGE_SIZE=1024x1536`
+
+Switch on VPS: edit `.env` → `docker compose up -d --build` (flask service reads env at start).
 
 For the Next.js build (shown in the UI footer and error hints), set one of:
 - Root `.env` next to `docker-compose.yml`: `NEXT_PUBLIC_SUPPORT_EMAIL=you@yourdomain.com` (used as a Docker build arg), or

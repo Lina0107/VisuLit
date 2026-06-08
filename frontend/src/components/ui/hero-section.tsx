@@ -168,8 +168,21 @@ function PortraitCard({
           </button>
         </div>
       </div>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={imageUrl} alt={altText} className="w-full rounded-xl object-cover" />
+      <div className="relative">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={imageUrl} alt={altText} className="w-full rounded-xl object-cover" />
+        {sceneVariantBusy && (
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl bg-pink-950/45 px-4 text-center text-white backdrop-blur-[1px]"
+            aria-live="polite"
+            aria-busy="true"
+          >
+            <Sparkles className="h-8 w-8 animate-pulse" />
+            <p className="text-sm font-medium">Generating new scene…</p>
+            <p className="text-[11px] text-white/80">Adjusting pose, mood, and setting</p>
+          </div>
+        )}
+      </div>
 
       {onSceneVariant && (
         <details className="mt-3 rounded-xl border border-pink-100 bg-white/50 px-3 py-2 text-pink-950">
@@ -240,7 +253,72 @@ function PortraitCard({
   );
 }
 
-const MIN_GENERATE_SPINNER_MS = 1800;
+const MIN_GENERATE_SPINNER_MS = 2200;
+const CACHED_GENERATE_SPINNER_MS = 3800;
+
+const GENERATE_STATUS_LINES = [
+  'Reading appearance quotes from the book…',
+  'Building a portrait prompt from evidence…',
+  'Composing likeness from the author\'s words…',
+  'Rendering your portrait…',
+] as const;
+
+function waitForGeneratingFeel(startedAt: number, cached: boolean): Promise<void> {
+  const minMs = cached ? CACHED_GENERATE_SPINNER_MS : MIN_GENERATE_SPINNER_MS;
+  const remaining = minMs - (Date.now() - startedAt);
+  if (remaining <= 0) return Promise.resolve();
+  return new Promise((resolve) => window.setTimeout(resolve, remaining));
+}
+
+function GeneratingPortraitPlaceholder({
+  characterName,
+  hintQuote,
+  label = 'Generating portrait',
+}: {
+  characterName?: string;
+  hintQuote?: string;
+  label?: string;
+}) {
+  const [lineIdx, setLineIdx] = React.useState(0);
+
+  React.useEffect(() => {
+    setLineIdx(0);
+    const timer = window.setInterval(() => {
+      setLineIdx((i) => (i + 1) % GENERATE_STATUS_LINES.length);
+    }, 950);
+    return () => window.clearInterval(timer);
+  }, [characterName, label]);
+
+  return (
+    <div className="mt-3 rounded-2xl border border-pink-200 bg-white/60 p-3" aria-live="polite" aria-busy="true">
+      <div className="text-xs font-semibold uppercase tracking-wider text-pink-900/70">{label}</div>
+      <div className="relative mt-2 aspect-[2/3] w-full overflow-hidden rounded-xl bg-gradient-to-b from-pink-100 via-pink-50/80 to-pink-100/90">
+        <div className="absolute inset-0 animate-pulse bg-gradient-to-tr from-pink-200/30 via-white/40 to-pink-200/20" />
+        <div className="absolute inset-x-0 top-1/4 flex justify-center">
+          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-white/50 ring-2 ring-pink-200/80">
+            <Sparkles className="h-10 w-10 animate-pulse text-pink-700/70" />
+          </div>
+        </div>
+        <div className="absolute inset-x-6 bottom-6 space-y-2">
+          <div className="h-2 rounded-full bg-pink-200/60" />
+          <div className="h-2 w-4/5 rounded-full bg-pink-200/45" />
+          <div className="h-2 w-3/5 rounded-full bg-pink-200/35" />
+        </div>
+      </div>
+      <p className="mt-3 text-center text-sm font-medium text-pink-950">
+        {characterName ? `Creating ${characterName}…` : 'Creating your portrait…'}
+      </p>
+      <p className="mt-1 min-h-[2.5em] text-center text-xs text-pink-950/65 transition-opacity duration-300">
+        {GENERATE_STATUS_LINES[lineIdx]}
+      </p>
+      {hintQuote ? (
+        <p className="mt-2 line-clamp-2 text-center text-[11px] italic text-pink-900/45">
+          &ldquo;{hintQuote}&rdquo;
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
 async function readApiJson(res: Response): Promise<any> {
   const raw = await res.text();
@@ -286,11 +364,20 @@ function trackEvent(name: string, params?: Record<string, unknown>) {
   gtag('event', name, params || {});
 }
 
-function mapApiCharactersToCast(characters: unknown[]): { character_id: string; character_name: string }[] {
+type AppearanceQuote = { quote?: string; location?: string };
+
+type CastMember = {
+  character_id: string;
+  character_name: string;
+  appearance_quotes?: AppearanceQuote[];
+};
+
+function mapApiCharactersToCast(characters: unknown[]): CastMember[] {
   return characters
     .map((c: any) => ({
       character_id: String(c?.character_id || ''),
       character_name: String(c?.character_name || ''),
+      appearance_quotes: Array.isArray(c?.appearance_quotes) ? c.appearance_quotes : [],
     }))
     .filter((c) => c.character_id && c.character_name);
 }
@@ -300,7 +387,7 @@ export default function HeroSection() {
   const [selectedBookId, setSelectedBookId] = React.useState<string>('');
   const [missingCharacterName, setMissingCharacterName] = React.useState('');
   const [missingStatus, setMissingStatus] = React.useState<string>('');
-  const [cast, setCast] = React.useState<{ character_id: string; character_name: string }[]>([]);
+  const [cast, setCast] = React.useState<CastMember[]>([]);
   const [castLoading, setCastLoading] = React.useState(false);
   const [selectedCharId, setSelectedCharId] = React.useState<string>('');
   const [selectedCharName, setSelectedCharName] = React.useState<string>('');
@@ -308,7 +395,6 @@ export default function HeroSection() {
   const [bookCharGenerating, setBookCharGenerating] = React.useState(false);
   const [bookSceneBusy, setBookSceneBusy] = React.useState(false);
   const [bookCharError, setBookCharError] = React.useState<string>('');
-
   const [preparing, setPreparing] = React.useState(false);
   const [etaSeconds, setEtaSeconds] = React.useState<number>(45);
   const [countdown, setCountdown] = React.useState<number>(0);
@@ -443,10 +529,24 @@ export default function HeroSection() {
     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  const selectedCastMember = React.useMemo(
+    () => cast.find((c) => c.character_id === selectedCharId) || null,
+    [cast, selectedCharId],
+  );
+  const appearanceQuoteCount = selectedCastMember?.appearance_quotes?.length ?? 0;
+
   const filteredBooks = books;
   const filteredHistory = historyFilter === 'all'
     ? historyItems
     : historyItems.filter((h) => (h.source_type || '').toLowerCase() === historyFilter);
+
+  function applyUsageFromResponse(json: { remaining_free_count?: number }) {
+    if (typeof json?.remaining_free_count === 'number') {
+      setUsageRemaining(json.remaining_free_count);
+    } else {
+      void refreshUsage();
+    }
+  }
 
   async function loadHistory() {
     setHistoryLoading(true);
@@ -491,12 +591,15 @@ export default function HeroSection() {
           `Generate failed (HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''})`
         );
       }
+      const wasCached = Boolean(json?.cached);
       trackEvent('generate_success', {
         source_type: 'book',
-        cached: Boolean(json?.cached),
+        cached: wasCached,
       });
+      applyUsageFromResponse(json);
+      await waitForGeneratingFeel(startedAt, wasCached);
       setBookCharImageUrl(json.image_url || '');
-      refreshUsage();
+      if (selectedBookId) void loadCastForBook(selectedBookId);
       loadHistory();
     } catch (e: unknown) {
       trackEvent('generate_failed', {
@@ -505,11 +608,6 @@ export default function HeroSection() {
       });
       setBookCharError(e instanceof Error ? e.message : 'Generate failed');
     } finally {
-      const elapsed = Date.now() - startedAt;
-      const remaining = MIN_GENERATE_SPINNER_MS - elapsed;
-      if (remaining > 0) {
-        await new Promise((r) => window.setTimeout(r, remaining));
-      }
       setBookCharGenerating(false);
     }
   }
@@ -542,12 +640,14 @@ export default function HeroSection() {
           `Generate failed (HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''})`
         );
       }
+      const wasCached = Boolean(json?.cached);
       trackEvent('generate_success', {
         source_type: 'custom',
-        cached: Boolean(json?.cached),
+        cached: wasCached,
       });
+      applyUsageFromResponse(json);
+      await waitForGeneratingFeel(startedAt, wasCached);
       setCustomImageUrl(json.image_url || '');
-      refreshUsage();
       loadHistory();
     } catch (e: unknown) {
       trackEvent('generate_failed', {
@@ -556,11 +656,6 @@ export default function HeroSection() {
       });
       setCustomOut(e instanceof Error ? e.message : 'Generate failed');
     } finally {
-      const elapsed = Date.now() - startedAt;
-      const remaining = MIN_GENERATE_SPINNER_MS - elapsed;
-      if (remaining > 0) {
-        await new Promise((r) => window.setTimeout(r, remaining));
-      }
       setCustomGenerating(false);
     }
   }
@@ -594,9 +689,11 @@ export default function HeroSection() {
           `Scene change failed (HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''})`
         );
       }
+      const wasCached = Boolean(json?.cached);
       trackEvent('scene_variant_success', { source_type: 'book' });
+      applyUsageFromResponse(json);
+      await waitForGeneratingFeel(startedAt, wasCached);
       setBookCharImageUrl(json.image_url || '');
-      refreshUsage();
       loadHistory();
     } catch (e: unknown) {
       trackEvent('scene_variant_failed', {
@@ -605,11 +702,6 @@ export default function HeroSection() {
       });
       setBookCharError(e instanceof Error ? e.message : 'Scene change failed');
     } finally {
-      const elapsed = Date.now() - startedAt;
-      const remaining = MIN_GENERATE_SPINNER_MS - elapsed;
-      if (remaining > 0) {
-        await new Promise((r) => window.setTimeout(r, remaining));
-      }
       setBookSceneBusy(false);
     }
   }
@@ -644,9 +736,11 @@ export default function HeroSection() {
           `Scene change failed (HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''})`
         );
       }
+      const wasCached = Boolean(json?.cached);
       trackEvent('scene_variant_success', { source_type: 'custom' });
+      applyUsageFromResponse(json);
+      await waitForGeneratingFeel(startedAt, wasCached);
       setCustomImageUrl(json.image_url || '');
-      refreshUsage();
       loadHistory();
     } catch (e: unknown) {
       trackEvent('scene_variant_failed', {
@@ -655,11 +749,6 @@ export default function HeroSection() {
       });
       setCustomOut(e instanceof Error ? e.message : 'Scene change failed');
     } finally {
-      const elapsed = Date.now() - startedAt;
-      const remaining = MIN_GENERATE_SPINNER_MS - elapsed;
-      if (remaining > 0) {
-        await new Promise((r) => window.setTimeout(r, remaining));
-      }
       setCustomSceneBusy(false);
     }
   }
@@ -724,7 +813,7 @@ export default function HeroSection() {
               </span>
               <span className="hidden sm:inline">
                 {usageRemaining === 0
-                  ? 'No free generations left today'
+                  ? 'Daily limit reached — try again tomorrow'
                   : `${usageRemaining} of ${usageLimit} free today`}
               </span>
             </span>
@@ -783,10 +872,16 @@ export default function HeroSection() {
 
       {usageRemaining !== null && (
         <p className="mx-auto mt-3 max-w-2xl px-4 text-center text-xs font-medium text-pink-900/70">
-          Today&apos;s generations:{' '}
-          <span className="text-pink-950">
-            {usageRemaining} of {usageLimit} remaining
-          </span>
+          {usageRemaining === 0 ? (
+            <span className="text-red-700">Daily limit reached — try again tomorrow.</span>
+          ) : (
+            <>
+              Today&apos;s generations:{' '}
+              <span className="text-pink-950">
+                {usageRemaining} of {usageLimit} remaining
+              </span>
+            </>
+          )}
         </p>
       )}
 
@@ -990,10 +1085,38 @@ export default function HeroSection() {
 
                     {selectedCharId && (
                       <div className="mt-3">
+                        {appearanceQuoteCount > 0 ? (
+                          <details className="mb-3 rounded-xl border border-pink-100 bg-white/50 px-3 py-2 text-pink-950">
+                            <summary className="cursor-pointer text-xs font-semibold text-pink-900/80 outline-none marker:text-pink-600">
+                              Book evidence ({appearanceQuoteCount} appearance quote{appearanceQuoteCount === 1 ? '' : 's'})
+                            </summary>
+                            <ul className="mt-2 space-y-2 text-[11px] leading-snug text-pink-950/75">
+                              {(selectedCastMember?.appearance_quotes || []).map((q, i) => (
+                                <li key={i} className="border-l-2 border-pink-200 pl-2">
+                                  <span className="italic">&ldquo;{q.quote || ''}&rdquo;</span>
+                                  {q.location ? (
+                                    <span className="mt-0.5 block text-pink-900/50 not-italic">{q.location}</span>
+                                  ) : null}
+                                </li>
+                              ))}
+                            </ul>
+                          </details>
+                        ) : (
+                          <p className="mb-3 rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2 text-[11px] leading-snug text-amber-900">
+                            No appearance quotes found for this character yet. Prepare the book again or add quotes via
+                            &ldquo;Missing character&rdquo; — portraits may be less faithful to the text.
+                          </p>
+                        )}
+                        {appearanceQuoteCount > 0 && appearanceQuoteCount < 2 && (
+                          <p className="mb-3 rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2 text-[11px] leading-snug text-amber-900">
+                            Only {appearanceQuoteCount} appearance quote in the book — the portrait may rely more on the
+                            model than on the author&apos;s description.
+                          </p>
+                        )}
                         {usageRemaining !== null && (
                           <p className={`mb-2 text-xs font-medium ${usageRemaining === 0 ? 'text-red-600' : 'text-pink-900/60'}`}>
                             {usageRemaining === 0
-                              ? 'No free generations left for today. Come back tomorrow!'
+                              ? `No free generations left for today. Come back tomorrow!`
                               : `${usageRemaining} free generation${usageRemaining === 1 ? '' : 's'} left today`}
                           </p>
                         )}
@@ -1010,10 +1133,11 @@ export default function HeroSection() {
                               : `Generate portrait of ${selectedCharName || 'character'}`}
                           </span>
                         </button>
-                        {(bookCharGenerating || bookSceneBusy) && (
-                          <div className="mt-2 text-xs text-center text-pink-950/60">
-                            {bookSceneBusy ? 'Changing scene… this may take up to a minute.' : 'This may take up to a minute…'}
-                          </div>
+                        {bookCharGenerating && (
+                          <GeneratingPortraitPlaceholder
+                            characterName={selectedCharName}
+                            hintQuote={selectedCastMember?.appearance_quotes?.[0]?.quote}
+                          />
                         )}
                         {bookCharImageUrl && !bookCharGenerating && (
                           <PortraitCard
@@ -1038,7 +1162,7 @@ export default function HeroSection() {
                   <div className="mt-2 text-sm text-pink-950/60">Select a book above to load the cast.</div>
                 ) : (
                   <div className="mt-2 text-sm text-pink-950/60">
-                    No characters yet. Prepare the book, or add someone below — additions are saved for everyone on this site.
+                    No characters yet. Prepare the book, or add someone below.
                   </div>
                 )}
               </div>
@@ -1052,7 +1176,7 @@ export default function HeroSection() {
               <div className="mt-2 rounded-2xl border border-pink-200 bg-white/70 p-4">
                 <div className="text-sm font-semibold text-pink-950">Didn't find someone in the cast?</div>
                 <div className="mt-1 text-sm text-pink-950/70">
-                  Type the name as in the book. We search the text and add them to the shared cast — visible to all visitors, not just your browser.
+                  Type the name as in the book. We search the text and add them to the cast.
                 </div>
                 <div className="mt-4 flex items-center gap-2 rounded-2xl border border-pink-200 bg-white/70 px-4 py-3">
                   <PenLine className="h-4 w-4 text-pink-700" />
@@ -1192,12 +1316,11 @@ export default function HeroSection() {
                   </button>
                 </div>
 
-                {(customGenerating || customSceneBusy) && (
-                  <div className="rounded-2xl border border-pink-200 bg-white/60 p-4 text-center text-sm text-pink-950/70">
-                    {customSceneBusy
-                      ? 'Changing scene… this may take up to a minute.'
-                      : 'Generating portrait… this may take up to a minute.'}
-                  </div>
+                {customGenerating && (
+                  <GeneratingPortraitPlaceholder
+                    characterName={customName.trim() || 'Original character'}
+                    label="Generating portrait"
+                  />
                 )}
                 {customImageUrl && !customGenerating && (
                   <PortraitCard

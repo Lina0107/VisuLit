@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { CookieConsentRoot } from "@/components/cookie-consent-root";
+import { BRAND_NAME, SITE_URL } from "@/lib/brand";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -20,7 +21,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "VisuLit",
+  metadataBase: new URL(SITE_URL),
+  title: BRAND_NAME,
   description:
     "VisuLit — literary character portraits from real book quotes. Public-domain books, tasteful prompts.",
   icons: {
@@ -28,17 +30,19 @@ export const metadata: Metadata = {
     apple: [{ url: "/visulit-logo.svg", type: "image/svg+xml" }],
   },
   openGraph: {
-    title: "VisuLit",
+    title: BRAND_NAME,
     description:
       "AI portraits of literary characters grounded in real book quotes.",
     type: "website",
-    siteName: "VisuLit",
+    siteName: BRAND_NAME,
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: `${BRAND_NAME} preview` }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "VisuLit",
+    title: BRAND_NAME,
     description:
       "AI portraits of literary characters grounded in real book quotes.",
+    images: ["/twitter-image"],
   },
 };
 
