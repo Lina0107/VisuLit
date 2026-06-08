@@ -9,4 +9,4 @@ export const SITE_URL =
 
 export const SUPPORT_EMAIL =
   (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SUPPORT_EMAIL) ||
-  'hello@visulit.com';
+  'visulitapp@gmail.com';

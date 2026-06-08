@@ -12,7 +12,7 @@ RUN cd frontend && npm ci
 COPY frontend ./frontend
 
 # Public support email is baked into the client bundle at build time.
-ARG NEXT_PUBLIC_SUPPORT_EMAIL=hello@visulit.com
+ARG NEXT_PUBLIC_SUPPORT_EMAIL=visulitapp@gmail.com
 ARG NEXT_PUBLIC_SITE_URL=https://visulit.com
 ENV NEXT_PUBLIC_SUPPORT_EMAIL=${NEXT_PUBLIC_SUPPORT_EMAIL}
 ENV NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
