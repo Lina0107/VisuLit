@@ -2270,7 +2270,8 @@ def api_generate():
         app.logger.exception("generate: image provider request failed for character_name=%s", character_name)
         return jsonify({"success": False, "error": f"Image generation failed: {type(e).__name__}: {str(e)}"}), 500
 
-    if normalized_char_id:
+    # Canonical portrait: only the first successful Generate (not Regenerate) for all visitors.
+    if normalized_char_id and not force_new:
         image_url = _set_canonical_portrait(normalized_char_id, image_url, prompt_hash)
 
     # save to per-user history (even for mock stage)
@@ -2290,12 +2291,16 @@ def api_generate():
         # history failure should not break main response
         pass
 
-    resp = make_response(jsonify({
+    payload = {
         "success": True,
         "image_url": image_url,
         "character_name": character_name,
-        "remaining_free_count": remaining
-    }))
+        "remaining_free_count": remaining,
+    }
+    if force_new:
+        payload["personal_variant"] = True
+
+    resp = make_response(jsonify(payload))
 
     if not request.cookies.get("user_id"):
         resp.set_cookie("user_id", user_id, max_age=365*24*60*60)
