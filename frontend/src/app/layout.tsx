@@ -23,6 +23,10 @@ export const metadata: Metadata = {
   title: "VisuLit",
   description:
     "VisuLit — literary character portraits from real book quotes. Public-domain books, tasteful prompts.",
+  icons: {
+    icon: [{ url: "/visulit-logo.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/visulit-logo.svg", type: "image/svg+xml" }],
+  },
   openGraph: {
     title: "VisuLit",
     description:
