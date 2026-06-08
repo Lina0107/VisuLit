@@ -1134,6 +1134,15 @@ def choose_appearance_quotes_with_gpt(book_title: str, characters, appearance_ca
 
 
 # -------------------- prompt builder for image generation (no extra GPT calls) --------------------
+# Appended to every book-character image prompt. Models often default to film actors for famous roles.
+_ANTI_CELEBRITY_BLOCK = (
+    " STRICT RULES: Depict an original anonymous person who does not resemble any real celebrity, "
+    "actor, model, or public figure. Do NOT copy any film, TV, stage, or book-cover adaptation, "
+    "movie poster, or actor who played this character. No named-person likeness. "
+    "Follow ONLY the quoted novel text below for face, hair, age, and clothing — not pop-culture memory."
+)
+
+
 def build_auto_description_from_character(book: dict, character: dict, max_quotes: int = 3) -> str:
     """
     Create a compact English prompt for image generation using existing appearance_quotes.
@@ -1235,17 +1244,25 @@ def build_auto_description_from_character(book: dict, character: dict, max_quote
         merged = " ".join(f"\"{q}\"" for q in selected_quotes)
         if len(merged) > 480:
             merged = merged[:480].rsplit(" ", 1)[0] + "…"
-        quotes_part = f" Use these lines as a guide to appearance and clothing: {merged}."
+        quotes_part = (
+            f" PRIMARY SOURCE — appearance and clothing MUST follow these lines from the novel only: {merged}."
+        )
+
+    if not quotes_part:
+        quotes_part = (
+            " No strong appearance quotes were found; invent a neutral period-appropriate look "
+            "without referencing any real person or adaptation."
+        )
 
     # soft global style hint (can be overridden on the client side if needed)
     style_hint = (
-        " Photorealistic portrait of a real human being."
-        " Cinematic soft natural lighting, sharp focus on face and eyes."
+        " Photorealistic portrait of an original human being."
+        " Soft natural lighting, sharp focus on face and eyes."
         " Detailed skin texture, realistic hair, period-appropriate clothing."
         " Neutral painterly background, no cartoonish or illustrated look."
     )
 
-    return header + "." + quotes_part + style_hint
+    return header + "." + quotes_part + style_hint + _ANTI_CELEBRITY_BLOCK
 
 
 # -------------------- scene variant (same identity, new pose / emotion / setting) --------------------
@@ -1348,12 +1365,13 @@ def build_scene_variant_prompt(
     scene_variant: dict,
     *,
     reference_image_present: bool,
-    literary_snippet: str,
+    literary_base: str,
     base_prompt_custom: str | None,
 ) -> str:
     """
-    Same person, new scene. When a reference image is present we rely on it for identity and avoid sad quotes.
-    For custom portraits, base_prompt_custom carries the prior full text prompt.
+    Same literary character, new pose/emotion/setting.
+    Book characters: literary_base (full quote-first prompt) is always primary; no celebrity likeness.
+  For custom portraits, base_prompt_custom carries the prior full text prompt.
     """
     emotion = _sanitize_scene_field(scene_variant.get("emotion") or "")
     pose = _sanitize_scene_field(scene_variant.get("pose") or "")
@@ -1366,16 +1384,18 @@ def build_scene_variant_prompt(
     if title:
         ctx = f'Set in the world of the novel "{title}"' + (f" by {author}" if author else "") + ". "
 
-    identity_lock = (
-        "CRITICAL — IDENTITY LOCK: Keep the exact same person as in the reference portrait. "
-        "Preserve facial bone structure, eyes, nose, lips, jaw, cheeks, brows, skin tone, apparent age, "
-        "hair color and hairstyle. Do not replace with a different face. "
-        "Change only what is requested below: expression, pose, framing, lighting, clothing arrangement if needed, and background."
-    )
-    if not reference_image_present:
+    if reference_image_present:
         identity_lock = (
-            "CRITICAL — IDENTITY LOCK: Stay consistent with this named literary character. "
-            "Preserve a stable facial identity across the image; vary only expression, pose, setting, and lighting as directed."
+            "CRITICAL — IDENTITY: Keep a consistent original fictional face (not a celebrity). "
+            "Preserve general age, era, hair color, and bone structure only if they match the novel text below. "
+            "Change expression, pose, framing, lighting, and background as directed. "
+            "Never imitate a real actor or film still."
+        )
+    else:
+        identity_lock = (
+            "CRITICAL — IDENTITY: Same original fictional character across images. "
+            "Face and wardrobe must match the novel text below, not any adaptation. "
+            "Vary only expression, pose, setting, and lighting as directed."
         )
 
     changes = []
@@ -1393,9 +1413,9 @@ def build_scene_variant_prompt(
         )
     changes_txt = "\n".join(f"- {c}" for c in changes)
 
-    snippet_part = ""
-    if literary_snippet and not reference_image_present:
-        snippet_part = f' Appearance cues from the text (avoid contradicting identity): "{literary_snippet}"'
+    literary_part = ""
+    if literary_base:
+        literary_part = f"\nNOVEL-GROUNDED BASE (highest priority):\n{literary_base}\n"
 
     custom_part = ""
     if base_prompt_custom:
@@ -1416,7 +1436,7 @@ def build_scene_variant_prompt(
     return (
         f"{header}\n{identity_lock}\n"
         f"Vary the scene as follows:\n{changes_txt}"
-        f"{snippet_part}{custom_part}{style_hint}"
+        f"{literary_part}{custom_part}{style_hint}{_ANTI_CELEBRITY_BLOCK}"
     )
 
 
@@ -2060,16 +2080,20 @@ def _api_generate_scene_variant(data: dict):
     if not character_id and not base_prompt_custom:
         return jsonify({"success": False, "error": "base_prompt required for custom scene variant"}), 400
 
-    literary_snippet = ""
-    if ch and not ref_bytes:
-        literary_snippet = _pick_neutral_appearance_snippet(ch)
+    literary_base = ""
+    if ch:
+        literary_base = build_auto_description_from_character(book, ch)
+
+    # Quote-first book characters: do not send a reference image to the provider.
+    # Reference locks in celebrity faces from prior bad generations / model bias.
+    provider_ref_bytes = None if character_id else ref_bytes
 
     description = build_scene_variant_prompt(
         character_name,
         book,
         scene_variant,
-        reference_image_present=bool(ref_bytes),
-        literary_snippet=literary_snippet,
+        reference_image_present=bool(provider_ref_bytes),
+        literary_base=literary_base,
         base_prompt_custom=base_prompt_custom if not character_id else None,
     )
 
@@ -2118,7 +2142,7 @@ def _api_generate_scene_variant(data: dict):
         }), 403
 
     try:
-        image_url = _call_image_provider(description, ref_bytes)
+        image_url = _call_image_provider(description, provider_ref_bytes)
     except RuntimeError as e:
         return jsonify({"success": False, "error": str(e)}), 500
     except Exception as e:

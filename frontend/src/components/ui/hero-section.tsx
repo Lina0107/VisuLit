@@ -177,8 +177,8 @@ function PortraitCard({
             New scene (same character)
           </summary>
           <p className="mt-2 text-[11px] leading-snug text-pink-950/65">
-            Change emotion, pose, or place. We send your current portrait as a reference so the model keeps the same face
-            as closely as the API allows — not a perfect guarantee, but much better than text-only.
+            Change emotion, pose, or place. For book characters we use your novel quotes only — not film actors or your
+            previous portrait as a visual reference (avoids celebrity look-alikes).
           </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             <label className="block text-[11px] font-medium text-pink-900/70">
