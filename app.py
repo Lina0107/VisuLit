@@ -1493,9 +1493,10 @@ def extract_appearance_quotes_with_gpt_fulltext(
 
 
 def _merge_appearance_quote_lists(*sources, character_name: str = "", aliases=None, max_items: int = 12) -> list:
-    """Dedupe quote dicts preserving order."""
+    """Dedupe quote dicts preserving order. Containment counts as duplicate
+    (the same passage often appears truncated at different lengths)."""
     merged = []
-    seen = set()
+    seen_norms = []
     for src in sources:
         if not src:
             continue
@@ -1505,12 +1506,14 @@ def _merge_appearance_quote_lists(*sources, character_name: str = "", aliases=No
             txt = (q.get("quote") or "").strip()
             if not txt:
                 continue
-            key = txt.lower()
-            if key in seen:
+            key = _normalize_for_verbatim(txt).rstrip(". ")
+            if not key:
+                continue
+            if any(key in s or s in key for s in seen_norms):
                 continue
             if not is_portrait_worthy_quote(txt, character_name, aliases):
                 continue
-            seen.add(key)
+            seen_norms.append(key)
             merged.append({
                 "quote": txt,
                 "location": (q.get("location") or "unknown").strip(),
@@ -2663,13 +2666,20 @@ def api_reselect_appearance_quotes():
                 if not extra:
                     continue
                 existing = chosen_map.get(canonical, [])
-                seen = {_normalize_for_verbatim(q.get("quote", "")) for q in existing}
                 combined = list(existing)
                 for q in extra:
                     key = _normalize_for_verbatim(q.get("quote", ""))
-                    if key and key not in seen:
-                        seen.add(key)
-                        combined.append(q)
+                    if not key:
+                        continue
+                    # Containment counts as duplicate: the same passage can be
+                    # truncated at different lengths by the two pipelines.
+                    if any(
+                        key in _normalize_for_verbatim(b.get("quote", ""))
+                        or _normalize_for_verbatim(b.get("quote", "")) in key
+                        for b in combined
+                    ):
+                        continue
+                    combined.append(q)
                 chosen_map[canonical] = combined[:max_quotes]
 
     updated = 0
