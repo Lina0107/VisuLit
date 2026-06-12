@@ -799,15 +799,18 @@ def quote_describes_another_person(quote: str, character_name: str = "", aliases
         return False
     q = quote.strip()
     flags = re.IGNORECASE
-    if re.search(r"\bI\s+remember\s+(her|him)\b", q, flags):
-        return True
-    if re.search(r"\bI\s+(recall|recollect|saw|noticed|thought)\s+(her|him|that\s+she|that\s+he)\b", q, flags):
-        return True
-    if re.search(r"\b(she|he)\s+had\s+(black|dark|fair|long|short|golden|white|grey|gray|red)\s+(hair|eyes|locks|brows)\b", q, flags):
-        return True
-    if re.match(r"^(she|he)\s+(was|had|looked|appeared|seemed)\s+", q, flags):
-        return True
     mentions = _quote_mentions_character(q, character_name, aliases)
+    # Pronoun-led descriptions are only suspicious when the quote never names
+    # the character. With the name present ("Elizabeth … she had dark eyes")
+    # the pronoun almost always refers to that same character.
+    if re.search(r"\bI\s+remember\s+(her|him)\b", q, flags) and not mentions:
+        return True
+    if re.search(r"\bI\s+(recall|recollect|saw|noticed|thought)\s+(her|him|that\s+she|that\s+he)\b", q, flags) and not mentions:
+        return True
+    if re.search(r"\b(she|he)\s+had\s+(black|dark|fair|long|short|golden|white|grey|gray|red)\s+(hair|eyes|locks|brows)\b", q, flags) and not mentions:
+        return True
+    if re.match(r"^(she|he)\s+(was|had|looked|appeared|seemed)\s+", q, flags) and not mentions:
+        return True
     if re.match(r"^(her|his)\s+(face|lips|cheeks|throat|neck|hair|eyes|countenance|chin|brow|forehead)\b", q, flags):
         if not mentions:
             return True
@@ -1359,6 +1362,134 @@ def validate_appearance_quotes_batch_with_gpt(book_title: str, characters_with_q
                 keep.append(pool[idx])
         out[norm] = keep
     return out
+
+
+def _normalize_for_verbatim(s: str) -> str:
+    """Loose normalization to verify a GPT-returned quote really exists in the text."""
+    s = (s or "").lower()
+    s = s.replace("\u2018", "'").replace("\u2019", "'").replace("\u201c", '"').replace("\u201d", '"')
+    s = s.replace("\u2014", " ").replace("\u2013", " ").replace("-", " ")
+    s = re.sub(r"[^a-z0-9 ]+", " ", s)
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def extract_appearance_quotes_with_gpt_fulltext(
+    book_title: str,
+    full_text: str,
+    characters: list,
+    *,
+    max_quotes_per_char: int = 4,
+    chunk_chars: int = 80000,
+    max_calls: int = 60,
+):
+    """
+    Deep pass: GPT reads the whole book in chunks and copies out verbatim
+    appearance passages, resolving pronouns from context ("she/her" lines the
+    name-anchored heuristic can never attribute). Every returned quote is
+    verified to actually exist in the chunk before being accepted.
+    Returns {normalized_name: [{quote, location}]}.
+    """
+    if not characters or not AITUNNEL_API_KEY:
+        return {}
+
+    clean = clean_gutenberg_text(full_text)
+    total = len(clean)
+    if not clean:
+        return {}
+
+    char_payload = []
+    norm_by_listed = {}
+    for ch in characters:
+        name = (ch.get("canonical_name") or ch.get("character_name") or "").strip()
+        if not name:
+            continue
+        aliases = [a for a in (ch.get("aliases") or []) if isinstance(a, str) and a.strip()]
+        char_payload.append({"name": name, "aliases": aliases[:6]})
+        norm_by_listed[normalize_name(name)] = name
+    if not char_payload:
+        return {}
+
+    prompt_head = (
+        f'You are given a verbatim excerpt from the novel "{book_title}" and a character list.\n'
+        "TASK: copy out passages that describe the PHYSICAL appearance of the listed characters:\n"
+        "stable features (eyes, hair, face, complexion, figure, height, build) or typical clothing.\n"
+        "RULES:\n"
+        "- Use surrounding context to resolve pronouns (she/her/he/his). Include a passage ONLY if you are\n"
+        "  confident it describes the listed character, even when the passage itself uses only a pronoun.\n"
+        "- Copy text EXACTLY as written in the excerpt (verbatim substring, 1-2 sentences, max 220 characters).\n"
+        "- EXCLUDE: emotions, actions, blood/violence/horror staging, another person's looks, dialogue with\n"
+        "  no visual detail, hypothetical or ironic remarks.\n"
+        f"- Max {max_quotes_per_char} passages per character. Omit characters with nothing.\n"
+        'Return STRICT JSON: {"found": [{"name": "str", "quotes": ["str", ...]}]}\n'
+    )
+
+    results = {}
+    calls = 0
+    group_size = 18
+    step = max(chunk_chars - 1500, 10000)
+
+    for start in range(0, len(clean), step):
+        chunk = clean[start:start + chunk_chars]
+        if len(chunk) < 500:
+            break
+        norm_chunk = _normalize_for_verbatim(chunk)
+
+        for gi in range(0, len(char_payload), group_size):
+            group = char_payload[gi:gi + group_size]
+            if calls >= max_calls:
+                return results
+            calls += 1
+            try:
+                content = call_aitunnel(
+                    [
+                        {"role": "system", "content": "You are a careful literature analyst. Return ONLY valid JSON."},
+                        {
+                            "role": "user",
+                            "content": prompt_head
+                            + "\nCHARACTERS:\n" + json.dumps(group, ensure_ascii=False)
+                            + "\n\nEXCERPT:\n" + chunk,
+                        },
+                    ],
+                    max_tokens=1400,
+                    temperature=0.05,
+                    json_mode=True,
+                )
+                raw = _safe_json_from_model(content)
+            except Exception:
+                app.logger.exception("deep quote extraction call failed (%s, chunk@%d)", book_title, start)
+                continue
+
+            for item in raw.get("found", []):
+                norm = normalize_name((item.get("name") or "").strip())
+                if norm not in norm_by_listed:
+                    continue
+                bucket = results.setdefault(norm, [])
+                for qt in item.get("quotes") or []:
+                    qt = re.sub(r"\s+", " ", str(qt or "")).strip()
+                    if not qt or len(qt) < 25:
+                        continue
+                    if len(qt) > 240:
+                        qt = qt[:240].rsplit(" ", 1)[0] + "…"
+                    norm_q = _normalize_for_verbatim(qt)
+                    pos = norm_chunk.find(norm_q)
+                    if pos < 0:
+                        continue  # hallucinated / paraphrased — reject
+                    key = norm_q
+                    if any(_normalize_for_verbatim(b["quote"]) == key for b in bucket):
+                        continue
+                    if not is_visual_appearance_quote(qt):
+                        continue
+                    if quote_is_action_or_horror_scene(qt, norm_by_listed[norm]):
+                        continue
+                    approx_offset = start + int(pos / max(len(norm_chunk), 1) * len(chunk))
+                    bucket.append({
+                        "quote": qt,
+                        "location": _book_location(approx_offset, total),
+                    })
+
+    for norm in results:
+        results[norm] = results[norm][:max_quotes_per_char * 2]
+    return results
 
 
 def _merge_appearance_quote_lists(*sources, character_name: str = "", aliases=None, max_items: int = 12) -> list:
@@ -2507,6 +2638,39 @@ def api_reselect_appearance_quotes():
             max_quotes=max_quotes,
             use_gpt=use_gpt,
         ) if canonical else []
+
+    # Deep pass: many classic descriptions use only pronouns ("her dark eyes"),
+    # which the name-anchored candidate search can never attribute. GPT reads
+    # the full text in chunks and copies verbatim passages for thin characters.
+    deep = bool(data.get("deep", True)) and use_gpt and bool(AITUNNEL_API_KEY)
+    if deep:
+        needy = [
+            mc for mc in builder_chars
+            if len(chosen_map.get(normalize_name((mc.get("canonical_name") or "").strip()), [])) < 2
+        ]
+        if needy:
+            try:
+                deep_map = extract_appearance_quotes_with_gpt_fulltext(
+                    book_title, text, needy, max_quotes_per_char=max_quotes,
+                )
+            except Exception:
+                app.logger.exception("deep quote extraction failed for %s", book_id)
+                deep_map = {}
+            for mc in needy:
+                name_key = (mc.get("canonical_name") or "").strip()
+                canonical = normalize_name(name_key)
+                extra = deep_map.get(canonical) or []
+                if not extra:
+                    continue
+                existing = chosen_map.get(canonical, [])
+                seen = {_normalize_for_verbatim(q.get("quote", "")) for q in existing}
+                combined = list(existing)
+                for q in extra:
+                    key = _normalize_for_verbatim(q.get("quote", ""))
+                    if key and key not in seen:
+                        seen.add(key)
+                        combined.append(q)
+                chosen_map[canonical] = combined[:max_quotes]
 
     updated = 0
     for rec in all_chars:
