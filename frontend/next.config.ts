@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Default rewrite proxy timeout is 30s; image generation and GPT quote
+    // selection regularly take longer and were surfacing as a bare
+    // "Internal Server Error" to users.
+    proxyTimeout: 300_000,
+  },
   async rewrites() {
     // Proxy Flask backend endpoints during dev:
     // Next: http://localhost:3000
