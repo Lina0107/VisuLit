@@ -1529,6 +1529,36 @@ _ANTI_HALLUCINATION_BLOCK = (
     "Ignore horror-movie, vampire, and adaptation stereotypes not supported by the quotes."
 )
 
+# Words that are titles/particles, not identifying name tokens.
+_NAME_TOKEN_STOPWORDS = {
+    "the", "van", "von", "de", "la", "le", "mr", "mrs", "miss", "ms", "dr",
+    "doctor", "sir", "lady", "lord", "count", "countess", "captain", "professor",
+    "madame", "monsieur", "saint", "st",
+}
+
+
+def _strip_identity_tokens(text: str, name: str, aliases: list | None = None) -> str:
+    """
+    Replace the character's name / aliases with a neutral token.
+    Famous names ("Dracula", "Sherlock Holmes") pull image models toward
+    film-adaptation actor faces no matter what the prompt forbids, so the
+    image prompt must never reveal WHO the person is.
+    """
+    if not text:
+        return text
+    tokens = set()
+    for source in [name] + list(aliases or []):
+        for part in re.split(r"[\s,.;:'\"]+", str(source or "").strip()):
+            part = part.strip("-’'\"")
+            if len(part) >= 3 and part.lower() not in _NAME_TOKEN_STOPWORDS:
+                tokens.add(part)
+    out = text
+    for tok in sorted(tokens, key=len, reverse=True):
+        out = re.sub(rf"\b{re.escape(tok)}\b", "this person", out, flags=re.IGNORECASE)
+    # Collapse doubled tokens after replacement ("this person this person").
+    out = re.sub(r"\b(this person)(\s+this person)+\b", r"\1", out, flags=re.IGNORECASE)
+    return out
+
 
 def build_auto_description_from_character(book: dict, character: dict, max_quotes: int = 3) -> str:
     """
@@ -1542,19 +1572,15 @@ def build_auto_description_from_character(book: dict, character: dict, max_quote
     appearance_quotes = character.get("appearance_quotes") or []
     evidence_quotes = character.get("evidence_quotes") or []
 
-    # basic book context
-    title = (book or {}).get("title") or ""
-    author = (book or {}).get("author") or ""
-
-    header_parts = []
-    if name:
-        header_parts.append(f"Portrait of {name}")
-    if title:
-        if author:
-            header_parts.append(f"from the novel \"{title}\" by {author}")
-        else:
-            header_parts.append(f"from the novel \"{title}\"")
-    header = ", ".join(header_parts) if header_parts else "Portrait of a literary character"
+    # IMPORTANT: never put the character name or the novel title in the image
+    # prompt. "Portrait of Dracula from the novel Dracula" makes the model
+    # recall film adaptations and paint a known actor's face, overriding any
+    # anti-celebrity instruction. The face must come from the quotes alone.
+    header = (
+        "Photorealistic head-and-shoulders portrait of an original fictional person. "
+        "Their identity is unknown and must not be guessed; build the face strictly "
+        "from the quoted description below"
+    )
 
     # Score quotes so we prefer the most "portrait-like" details.
     # (Avoid choosing only height/tallness or chapter headings.)
@@ -1626,15 +1652,15 @@ def build_auto_description_from_character(book: dict, character: dict, max_quote
         evidence_texts.sort(key=score_evidence, reverse=True)
         selected_quotes = evidence_texts[:max_quotes]
 
-    # compact quotes block
+    # compact quotes block (names stripped so the model cannot identify the role)
     quotes_part = ""
     if selected_quotes:
-        # Make sure the total length is reasonable
-        merged = " ".join(f"\"{q}\"" for q in selected_quotes)
+        anonymized = [_strip_identity_tokens(q, name, char_aliases) for q in selected_quotes]
+        merged = " ".join(f"\"{q}\"" for q in anonymized)
         if len(merged) > 480:
             merged = merged[:480].rsplit(" ", 1)[0] + "…"
         quotes_part = (
-            f" PRIMARY SOURCE — appearance and clothing MUST follow these lines from the novel only: {merged}."
+            f" PRIMARY SOURCE — appearance and clothing MUST follow these lines from a classic novel only: {merged}."
         )
 
     if not quotes_part:
@@ -1647,7 +1673,9 @@ def build_auto_description_from_character(book: dict, character: dict, max_quote
     style_hint = (
         " Photorealistic portrait of an original human being."
         " Soft natural lighting, sharp focus on face and eyes."
-        " Detailed skin texture, realistic hair, period-appropriate clothing."
+        " Detailed skin texture, realistic hair."
+        " Clothing and era: follow the quoted lines; if unclear, use a generic"
+        " 19th-century European period look."
         " Neutral painterly background, no cartoonish or illustrated look."
     )
 
@@ -1791,11 +1819,9 @@ def build_scene_variant_prompt(
     setting = _sanitize_scene_field(scene_variant.get("setting") or "")
     notes = _sanitize_scene_field(scene_variant.get("notes") or "", 400)
 
-    title = (book or {}).get("title") or ""
-    author = (book or {}).get("author") or ""
-    ctx = ""
-    if title:
-        ctx = f'Set in the world of the novel "{title}"' + (f" by {author}" if author else "") + ". "
+    # Never name the novel or character here — famous titles/names pull the
+    # model toward film-adaptation actor faces (see build_auto_description).
+    ctx = "Set in a period-appropriate world consistent with the description below. "
 
     if reference_image_present:
         identity_lock = (
@@ -1845,7 +1871,7 @@ def build_scene_variant_prompt(
         "sharp focus on eyes, period-appropriate wardrobe when relevant. No cartoon or illustration style."
     )
 
-    header = f"Portrait of {character_name}. {ctx}".strip()
+    header = f"Portrait of the same original fictional person as before. {ctx}".strip()
     return (
         f"{header}\n{identity_lock}\n"
         f"Vary the scene as follows:\n{changes_txt}"
@@ -2732,15 +2758,36 @@ def _api_generate_scene_variant(data: dict):
 
 @app.route("/api/reset_canonical_portrait", methods=["POST"])
 def api_reset_canonical_portrait():
-    """Clear the shared site-wide portrait for a book character (bad face stuck on canonical)."""
+    """Clear the shared site-wide portrait for a book character (bad face stuck on canonical).
+
+    Accepts one of:
+      {"character_id": "..."}  — reset one character
+      {"book_id": "..."}       — reset every character of a book
+      {"all": true}            — reset every canonical portrait (e.g. after a prompt fix)
+    """
     data = request.get_json(silent=True) or {}
     character_id = (data.get("character_id") or "").strip()
-    if not character_id:
-        return jsonify({"success": False, "error": "character_id required"}), 400
-    ok = _clear_canonical_portrait(character_id)
-    if not ok:
-        return jsonify({"success": False, "error": "Character not found or no canonical portrait"}), 404
-    return jsonify({"success": True, "character_id": character_id})
+    book_id = (data.get("book_id") or "").strip()
+    reset_all = bool(data.get("all"))
+
+    if character_id:
+        ok = _clear_canonical_portrait(character_id)
+        if not ok:
+            return jsonify({"success": False, "error": "Character not found or no canonical portrait"}), 404
+        return jsonify({"success": True, "character_id": character_id})
+
+    if book_id or reset_all:
+        all_chars = load_json(CHARACTERS_FILE, [])
+        targets = [
+            c.get("character_id")
+            for c in all_chars
+            if c.get("canonical_portrait_url")
+            and (reset_all or c.get("book_id") == book_id)
+        ]
+        cleared = sum(1 for cid in targets if cid and _clear_canonical_portrait(cid))
+        return jsonify({"success": True, "cleared": cleared})
+
+    return jsonify({"success": False, "error": "character_id, book_id, or all required"}), 400
 
 
 @app.route("/api/generate", methods=["POST"])
