@@ -789,6 +789,89 @@ def _quote_mentions_character(quote: str, character_name: str, aliases: list | N
     return False
 
 
+# Signature Dracula/vampire physical description (observer POV) — not the narrator's own face.
+_VAMPIRE_FACE_MARKERS = [
+    re.compile(r"\bwaxen face\b", re.IGNORECASE),
+    re.compile(r"\bheavy moustache\b", re.IGNORECASE),
+    re.compile(r"\bpeculiarly arched nostrils\b", re.IGNORECASE),
+    re.compile(r"\blofty domed forehead\b", re.IGNORECASE),
+    re.compile(r"\bsharp white teeth\b", re.IGNORECASE),
+    re.compile(r"\bparted red lips\b", re.IGNORECASE),
+    re.compile(r"\bteeth so white\b", re.IGNORECASE),
+    re.compile(r"\beyes that seem to be burning\b", re.IGNORECASE),
+    re.compile(r"\ball in black\b", re.IGNORECASE),
+    re.compile(r"\bhollow burning eyes\b", re.IGNORECASE),
+    re.compile(r"\bhigh aquiline nose\b", re.IGNORECASE),
+]
+
+
+def _character_is_count_or_vampire(character_name: str, aliases: list | None = None) -> bool:
+    blob = " ".join([character_name or ""] + [str(a) for a in (aliases or []) if a]).lower()
+    return "dracula" in blob or re.search(r"\bcount\b", blob)
+
+
+def quote_references_other_cast_member(
+    quote: str,
+    character_name: str,
+    aliases: list | None,
+    cast_members: list | None,
+) -> bool:
+    """Quote names another book character — e.g. Count's face stored on Jonathan Harker."""
+    if not quote or not cast_members:
+        return False
+    q = quote.strip()
+    self_norm = normalize_name(character_name)
+    mentions_self = _quote_mentions_character(q, character_name, aliases)
+
+    for other in cast_members:
+        oname = (other.get("character_name") or other.get("canonical_name") or other.get("name") or "").strip()
+        if not oname or normalize_name(oname) == self_norm:
+            continue
+        other_aliases = other.get("aliases") or []
+
+        # Require a distinctive full name (>= 8 chars) to avoid sibling surname collisions.
+        for nm in [oname] + [a for a in other_aliases if isinstance(a, str)]:
+            nm = nm.strip()
+            if len(nm) < 8 or " " not in nm:
+                continue
+            if re.search(rf"\b{re.escape(nm)}\b", q, re.IGNORECASE):
+                if not mentions_self:
+                    return True
+
+        other_blob = (oname + " " + " ".join(str(a) for a in other_aliases)).lower()
+        if "dracula" in other_blob or re.search(r"\bcount\b", other_blob):
+            if re.search(r"\bthe Count'?s?\b", q, re.IGNORECASE) and not mentions_self:
+                return True
+            if re.search(r"\bCount Dracula'?s?\b", q, re.IGNORECASE) and not _character_is_count_or_vampire(character_name, aliases):
+                return True
+            if re.search(r"\bCount'?s\s+(evil\s+)?face\b", q, re.IGNORECASE) and not _character_is_count_or_vampire(character_name, aliases):
+                return True
+
+        if "hyde" in other_blob:
+            if re.search(r"\bMr\.?\s*Hyde'?s?\b", q, re.IGNORECASE) and not _quote_mentions_character(q, character_name, aliases):
+                return True
+
+    return False
+
+
+def quote_is_misattributed_villain_portrait(
+    quote: str,
+    character_name: str = "",
+    aliases: list | None = None,
+) -> bool:
+    """Dracula-style face description attached to a non-vampire cast member (e.g. Harker's journal)."""
+    if not quote or _character_is_count_or_vampire(character_name, aliases):
+        return False
+    if _quote_mentions_character(quote, character_name, aliases):
+        return False
+    hits = sum(1 for p in _VAMPIRE_FACE_MARKERS if p.search(quote))
+    if hits >= 2:
+        return True
+    if hits >= 1 and re.search(r"\bwaxen face\b", quote, re.IGNORECASE):
+        return True
+    return False
+
+
 def quote_describes_another_person(quote: str, character_name: str = "", aliases: list | None = None) -> bool:
     """
     Heuristic: narrator describing someone else's appearance.
@@ -810,6 +893,14 @@ def quote_describes_another_person(quote: str, character_name: str = "", aliases
     if re.search(r"\b(she|he)\s+had\s+(black|dark|fair|long|short|golden|white|grey|gray|red)\s+(hair|eyes|locks|brows)\b", q, flags) and not mentions:
         return True
     if re.match(r"^(she|he)\s+(was|had|looked|appeared|seemed)\s+", q, flags) and not mentions:
+        return True
+    if re.search(r"\b(last night|to-day|today)\s+he\s+(was|is)\b", q, flags) and not mentions:
+        return True
+    if re.search(r"\bto-day\s+he\s+is\s+(a\s+)?(drawn|haggard)\b", q, flags) and not mentions:
+        return True
+    if re.match(r"^the\s+(waxen\s+)?(face|mouth)\b", q, flags) and not mentions:
+        return True
+    if re.match(r"^a\s+tall\s+(man|woman)\b", q, flags) and not mentions:
         return True
     if re.match(r"^(her|his)\s+(face|lips|cheeks|throat|neck|hair|eyes|countenance|chin|brow|forehead)\b", q, flags):
         if not mentions:
@@ -850,9 +941,14 @@ def is_portrait_worthy_quote(
     quote: str,
     character_name: str = "",
     aliases: list | None = None,
+    cast_members: list | None = None,
 ) -> bool:
     """Full gate for appearance quotes used in portraits and stored on characters."""
     if not is_visual_appearance_quote(quote):
+        return False
+    if quote_references_other_cast_member(quote, character_name, aliases, cast_members):
+        return False
+    if quote_is_misattributed_villain_portrait(quote, character_name, aliases):
         return False
     if quote_describes_another_person(quote, character_name, aliases):
         return False
@@ -896,6 +992,7 @@ def select_appearance_quotes_from_candidates(
     *,
     character_name: str = "",
     aliases: list | None = None,
+    cast_members: list | None = None,
 ) -> list:
     """
     Deterministic quote selection with group coverage.
@@ -914,7 +1011,7 @@ def select_appearance_quotes_from_candidates(
         qt = (c.get("quote") or "").strip()
         if not qt:
             continue
-        if not is_portrait_worthy_quote(qt, character_name, aliases):
+        if not is_portrait_worthy_quote(qt, character_name, aliases, cast_members):
             continue
 
         g = _appearance_groups(qt)
@@ -1072,6 +1169,15 @@ def build_appearance_candidates(full_text: str, characters, max_per_char=28):
     kw_clothes = _compile_kw(APPEARANCE_CLOTHES)
     kw_colors = _compile_kw(APPEARANCE_COLORS)
 
+    cast_members = [
+        {
+            "character_name": (c.get("canonical_name") or "").strip(),
+            "aliases": c.get("aliases") or [],
+        }
+        for c in characters
+        if (c.get("canonical_name") or "").strip()
+    ]
+
     result = {}  # canonical_name -> list[{quote, location}]
     for ch in characters:
         name = (ch.get("canonical_name") or "").strip()
@@ -1164,7 +1270,7 @@ def build_appearance_candidates(full_text: str, characters, max_per_char=28):
 
             if snippet.lower() in seen_quotes:
                 continue
-            if not is_portrait_worthy_quote(snippet, name, aliases):
+            if not is_portrait_worthy_quote(snippet, name, aliases, cast_members):
                 continue
             seen_quotes.add(snippet.lower())
 
@@ -1283,6 +1389,8 @@ _GPT_VALIDATE_APPEARANCE_PROMPT = (
     "(face, hair, eyes, age, build, typical clothing) — not a scene, victim, or metaphor.\n\n"
     "REJECT if:\n"
     "- Describes ANOTHER person's body/face (e.g. 'Her face was ghastly…' for Count Dracula)\n"
+    "- A diary narrator's description of someone else (e.g. Count Dracula's aquiline face on Jonathan Harker)\n"
+    "- Quote names another cast member ('the Count's face', 'Count Dracula') for the wrong character\n"
     "- Horror/action staging: blood on lips/throat, biting, grasping a neck, terror, gore\n"
     "- Figurative language only ('my blood ran cold', 'blood congealed with horror')\n"
     "- Plot/dialogue with no portrait-worthy visual detail of THIS character\n"
@@ -1296,7 +1404,11 @@ _GPT_VALIDATE_APPEARANCE_PROMPT = (
 )
 
 
-def validate_appearance_quotes_batch_with_gpt(book_title: str, characters_with_quotes: list) -> dict:
+def validate_appearance_quotes_batch_with_gpt(
+    book_title: str,
+    characters_with_quotes: list,
+    cast_members: list | None = None,
+) -> dict:
     """
     GPT pass 2 — auditor for one or many characters in a single call.
     characters_with_quotes: [{canonical_name, aliases, quotes:[{quote, location}]}]
@@ -1308,6 +1420,14 @@ def validate_appearance_quotes_batch_with_gpt(book_title: str, characters_with_q
     payload_chars = []
     quote_pools = {}  # norm_name -> list of original quote dicts (heuristic-prefiltered)
 
+    cast = cast_members or [
+        {
+            "character_name": (ch.get("canonical_name") or ch.get("character_name") or "").strip(),
+            "aliases": ch.get("aliases") or [],
+        }
+        for ch in characters_with_quotes
+    ]
+
     for ch in characters_with_quotes:
         name = (ch.get("canonical_name") or ch.get("character_name") or "").strip()
         if not name:
@@ -1318,16 +1438,22 @@ def validate_appearance_quotes_batch_with_gpt(book_title: str, characters_with_q
             if not isinstance(q, dict):
                 continue
             txt = (q.get("quote") or "").strip()
-            if not txt or not is_portrait_worthy_quote(txt, name, aliases):
+            if not txt or not is_portrait_worthy_quote(txt, name, aliases, cast):
                 continue
             pool.append({"quote": txt, "location": (q.get("location") or "unknown").strip()})
         if not pool:
             continue
         norm = normalize_name(name)
         quote_pools[norm] = pool
+        other_cast = [
+            (c.get("character_name") or c.get("canonical_name") or "").strip()
+            for c in cast
+            if normalize_name(c.get("character_name") or c.get("canonical_name") or "") != norm
+        ]
         payload_chars.append({
             "canonical_name": name,
             "aliases": aliases[:8],
+            "other_cast_in_book": other_cast[:12],
             "quotes": [{"idx": i, "text": q["quote"][:220]} for i, q in enumerate(pool)],
         })
 
@@ -1419,6 +1545,8 @@ def extract_appearance_quotes_with_gpt_fulltext(
         "- Copy text EXACTLY as written in the excerpt (verbatim substring, 1-2 sentences, max 220 characters).\n"
         "- EXCLUDE: emotions, actions, blood/violence/horror staging, another person's looks, dialogue with\n"
         "  no visual detail, hypothetical or ironic remarks.\n"
+        "- CRITICAL: diary narrators (e.g. Jonathan Harker) often DESCRIBE other characters (Count Dracula).\n"
+        "  Assign only passages that describe the LISTED character's own body/face — not someone they observe.\n"
         f"- Max {max_quotes_per_char} passages per character. Omit characters with nothing.\n"
         'Return STRICT JSON: {"found": [{"name": "str", "quotes": ["str", ...]}]}\n'
     )
@@ -1477,9 +1605,14 @@ def extract_appearance_quotes_with_gpt_fulltext(
                     key = norm_q
                     if any(_normalize_for_verbatim(b["quote"]) == key for b in bucket):
                         continue
-                    if not is_visual_appearance_quote(qt):
+                    char_name = norm_by_listed[norm]
+                    char_aliases = next(
+                        (c.get("aliases") or [] for c in char_payload if normalize_name(c.get("name") or "") == norm),
+                        [],
+                    )
+                    if not is_portrait_worthy_quote(qt, char_name, char_aliases, char_payload):
                         continue
-                    if quote_is_action_or_horror_scene(qt, norm_by_listed[norm]):
+                    if quote_is_action_or_horror_scene(qt, char_name, char_aliases):
                         continue
                     approx_offset = start + int(pos / max(len(norm_chunk), 1) * len(chunk))
                     bucket.append({
@@ -1492,7 +1625,7 @@ def extract_appearance_quotes_with_gpt_fulltext(
     return results
 
 
-def _merge_appearance_quote_lists(*sources, character_name: str = "", aliases=None, max_items: int = 12) -> list:
+def _merge_appearance_quote_lists(*sources, character_name: str = "", aliases=None, cast_members=None, max_items: int = 12) -> list:
     """Dedupe quote dicts preserving order. Containment counts as duplicate
     (the same passage often appears truncated at different lengths)."""
     merged = []
@@ -1511,7 +1644,7 @@ def _merge_appearance_quote_lists(*sources, character_name: str = "", aliases=No
                 continue
             if any(key in s or s in key for s in seen_norms):
                 continue
-            if not is_portrait_worthy_quote(txt, character_name, aliases):
+            if not is_portrait_worthy_quote(txt, character_name, aliases, cast_members):
                 continue
             seen_norms.append(key)
             merged.append({
@@ -1530,6 +1663,7 @@ def resolve_appearance_quotes_for_character(
     *,
     max_quotes: int = 6,
     use_gpt: bool = True,
+    cast_members: list | None = None,
 ) -> list:
     """
     Full pipeline: heuristic shortlist → GPT selection → heuristic merge → GPT audit.
@@ -1545,6 +1679,7 @@ def resolve_appearance_quotes_for_character(
         max_quotes=max(max_quotes, 8),
         character_name=name,
         aliases=aliases,
+        cast_members=cast_members,
     )
 
     if not use_gpt or not AITUNNEL_API_KEY:
@@ -1565,6 +1700,7 @@ def resolve_appearance_quotes_for_character(
         heuristic,
         character_name=name,
         aliases=aliases,
+        cast_members=cast_members,
         max_items=max(max_quotes, 10),
     )
     if not merged:
@@ -1574,6 +1710,7 @@ def resolve_appearance_quotes_for_character(
         validated = validate_appearance_quotes_batch_with_gpt(
             book_title,
             [{"canonical_name": name, "aliases": aliases, "quotes": merged}],
+            cast_members=cast_members,
         )
         final = validated.get(normalize_name(name), [])
         if final:
@@ -1597,6 +1734,16 @@ def audit_appearance_quotes_heuristic(all_chars: list | None = None) -> dict:
         re.IGNORECASE,
     )
 
+    cast_by_book = {}
+    for rec in chars:
+        if not isinstance(rec, dict):
+            continue
+        bid = rec.get("book_id") or ""
+        cast_by_book.setdefault(bid, []).append({
+            "character_name": rec.get("character_name") or "",
+            "aliases": rec.get("aliases") or [],
+        })
+
     for rec in chars:
         if not isinstance(rec, dict):
             continue
@@ -1604,6 +1751,7 @@ def audit_appearance_quotes_heuristic(all_chars: list | None = None) -> dict:
         book_id = rec.get("book_id") or ""
         aliases = rec.get("aliases") or []
         apq = rec.get("appearance_quotes") or []
+        cast = cast_by_book.get(book_id) or []
 
         if not apq:
             zero_quotes += 1
@@ -1618,7 +1766,7 @@ def audit_appearance_quotes_heuristic(all_chars: list | None = None) -> dict:
             txt = (q.get("quote") or "").strip()
             if not txt:
                 continue
-            if not is_portrait_worthy_quote(txt, name, aliases):
+            if not is_portrait_worthy_quote(txt, name, aliases, cast):
                 issues.append({
                     "character_name": name,
                     "book_id": book_id,
@@ -1896,7 +2044,7 @@ def _characters_for_book(book_id: str) -> list:
     return book_chars
 
 
-def filter_stored_appearance_quotes(character: dict) -> list:
+def filter_stored_appearance_quotes(character: dict, cast_members: list | None = None) -> list:
     """Drop portrait-unsafe lines already saved on a character record."""
     name = (character.get("character_name") or "").strip()
     aliases = character.get("aliases") or []
@@ -1907,7 +2055,7 @@ def filter_stored_appearance_quotes(character: dict) -> list:
         txt = (q.get("quote") or "").strip()
         if not txt:
             continue
-        if not is_portrait_worthy_quote(txt, name, aliases):
+        if not is_portrait_worthy_quote(txt, name, aliases, cast_members):
             continue
         out.append({
             "quote": txt,
@@ -2529,6 +2677,10 @@ def api_sanitize_appearance_quotes():
     for bid, recs in by_book.items():
         book = books_by_id.get(bid) or {}
         book_title = book.get("title") or bid or "Unknown book"
+        cast = [
+            {"character_name": r.get("character_name") or "", "aliases": r.get("aliases") or []}
+            for r in recs
+        ]
         gpt_batch = None
         if use_gpt and AITUNNEL_API_KEY:
             try:
@@ -2538,17 +2690,18 @@ def api_sanitize_appearance_quotes():
                         {
                             "canonical_name": r.get("character_name") or "",
                             "aliases": r.get("aliases") or [],
-                            "quotes": filter_stored_appearance_quotes(r),
+                            "quotes": filter_stored_appearance_quotes(r, cast),
                         }
                         for r in recs
                     ],
+                    cast_members=cast,
                 )
             except Exception:
                 app.logger.exception("GPT sanitize batch failed for book_id=%s", bid)
 
         for rec in recs:
             before = len(rec.get("appearance_quotes") or [])
-            filtered = filter_stored_appearance_quotes(rec)
+            filtered = filter_stored_appearance_quotes(rec, cast)
             norm = normalize_name(rec.get("character_name") or "")
             if gpt_batch is not None and norm in gpt_batch:
                 filtered = gpt_batch[norm]
@@ -2628,6 +2781,11 @@ def api_reselect_appearance_quotes():
 
     appearance_candidates_map = build_appearance_candidates(text, builder_chars, max_per_char=max_per_char)
 
+    cast_members = [
+        {"character_name": mc.get("canonical_name") or "", "aliases": mc.get("aliases") or []}
+        for mc in builder_chars
+    ]
+
     book_title = book.get("title") or ""
     chosen_map = {}
     for mc in builder_chars:
@@ -2640,6 +2798,7 @@ def api_reselect_appearance_quotes():
             candidates,
             max_quotes=max_quotes,
             use_gpt=use_gpt,
+            cast_members=cast_members,
         ) if canonical else []
 
     # Deep pass: many classic descriptions use only pronouns ("her dark eyes"),
@@ -2662,17 +2821,19 @@ def api_reselect_appearance_quotes():
             for mc in needy:
                 name_key = (mc.get("canonical_name") or "").strip()
                 canonical = normalize_name(name_key)
+                aliases = mc.get("aliases") or []
                 extra = deep_map.get(canonical) or []
                 if not extra:
                     continue
                 existing = chosen_map.get(canonical, [])
                 combined = list(existing)
                 for q in extra:
-                    key = _normalize_for_verbatim(q.get("quote", ""))
+                    txt = (q.get("quote") or "").strip()
+                    if not txt or not is_portrait_worthy_quote(txt, name_key, aliases, cast_members):
+                        continue
+                    key = _normalize_for_verbatim(txt)
                     if not key:
                         continue
-                    # Containment counts as duplicate: the same passage can be
-                    # truncated at different lengths by the two pipelines.
                     if any(
                         key in _normalize_for_verbatim(b.get("quote", ""))
                         or _normalize_for_verbatim(b.get("quote", "")) in key
