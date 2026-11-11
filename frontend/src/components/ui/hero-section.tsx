@@ -3,8 +3,8 @@
 import React from 'react';
 import {
   BookOpenText,
-  ChevronRight,
   Download,
+  ImageDown,
   PenLine,
   Search,
   Sparkles,
@@ -12,6 +12,8 @@ import {
 import Link from 'next/link';
 import { BRAND_NAME, SUPPORT_EMAIL } from '@/lib/brand';
 import { ExamplesGallery } from '@/components/examples-gallery';
+import { HeroShowcase } from '@/components/hero-showcase';
+import { downloadShareCard, type ShareCardText } from '@/lib/share-card';
 
 function ErrorWithSupport({ message }: { message: string }) {
   return (
@@ -107,6 +109,7 @@ function PortraitCard({
   imageUrl,
   altText,
   filename,
+  shareText,
   onRegenerate,
   regenerating = false,
   onSceneVariant,
@@ -115,6 +118,8 @@ function PortraitCard({
   imageUrl: string;
   altText: string;
   filename: string;
+  /** Text for the social card (portrait + quote + site address). */
+  shareText?: ShareCardText;
   onRegenerate?: () => Promise<void> | void;
   regenerating?: boolean;
   onSceneVariant?: (payload: SceneVariantPayload) => Promise<void>;
@@ -166,6 +171,26 @@ function PortraitCard({
             <Download className="h-3.5 w-3.5" />
             {downloading ? 'Saving…' : 'Download'}
           </button>
+          {shareText && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={async () => {
+                setDownloading(true);
+                try {
+                  await downloadShareCard(imageUrl, shareText, filename.replace(/\.jpg$/, '-card.jpg'));
+                } catch (e) {
+                  console.error('Share card failed', e);
+                } finally {
+                  setDownloading(false);
+                }
+              }}
+              className="inline-flex items-center gap-1.5 bg-white hover:bg-pink-50 disabled:opacity-50 text-pink-950 text-xs px-4 py-2 rounded-full font-medium transition ring-1 ring-pink-200"
+            >
+              <ImageDown className="h-3.5 w-3.5" />
+              Share card
+            </button>
+          )}
         </div>
       </div>
       <div className="relative">
@@ -830,79 +855,41 @@ export default function HeroSection() {
 
       <div id="top" />
 
-      <div className="px-4">
-        <div className="mx-auto mt-20 flex w-full max-w-3xl flex-col items-stretch gap-3 rounded-3xl border border-pink-200 bg-white/60 px-4 py-3 text-center backdrop-blur sm:mt-24 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-x-4 sm:gap-y-2 sm:text-left md:mt-20">
-          <div className="flex items-start justify-center gap-2 sm:min-w-0 sm:flex-1 sm:items-center sm:justify-start">
-            <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-pink-700 sm:mt-0" />
-            <span className="text-left text-sm text-pink-950/80 sm:text-base">
-              Quotes are extracted from the original book text (no inventions)
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => scrollToId('characters')}
-            className="inline-flex shrink-0 items-center justify-center gap-1 rounded-full py-1.5 text-sm font-medium text-pink-900 hover:text-pink-700 sm:py-0"
-          >
-            <span>See examples</span>
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
-      <h1 className="mx-auto mt-8 max-w-[900px] px-4 text-center text-3xl font-semibold text-balance text-pink-950 sm:text-4xl md:text-6xl lg:text-7xl">
-        Meet your favorite characters with {BRAND_NAME} — {usageLimit} free generations daily
+      <h1 className="mx-auto mt-10 max-w-[900px] px-4 text-center font-serif text-4xl font-semibold text-balance text-pink-950 sm:text-5xl md:mt-14 md:text-6xl lg:text-7xl">
+        See them the way the author wrote them
       </h1>
 
-      <p className="mx-auto mt-6 max-w-2xl px-4 text-center text-sm text-pink-950/70 md:text-base">
-        {BRAND_NAME} extracts character lists and appearance quotes from public-domain books, then builds photorealistic portrait prompts
-        you can reuse, tweak, and regenerate in seconds.
+      <p className="mx-auto mt-5 max-w-xl px-4 text-center text-base text-pink-950/75 md:text-lg">
+        Portraits of classic book characters, built from the novel&apos;s own words. Not the film cast.
       </p>
 
-      <div className="mx-auto mt-5 w-full max-w-2xl px-4 text-center">
-        <div className="rounded-2xl border border-pink-200 bg-white/70 px-4 py-3 text-sm text-pink-950/85 shadow-sm backdrop-blur">
-          <span className="font-semibold text-pink-950">Free to try</span>
-          {' · '}
-          <span>
-            {usageLimit} portrait generations per day — no credit card
-          </span>
-          {' · '}
-          <span className="text-pink-950/90">No signup required</span>
-        </div>
-      </div>
-
-      {usageRemaining !== null && (
-        <p className="mx-auto mt-3 max-w-2xl px-4 text-center text-xs font-medium text-pink-900/70">
-          {usageRemaining === 0 ? (
-            <span className="text-red-700">Daily limit reached — try again tomorrow.</span>
-          ) : (
-            <>
-              Today&apos;s generations:{' '}
-              <span className="text-pink-950">
-                {usageRemaining} of {usageLimit} remaining
-              </span>
-            </>
-          )}
-        </p>
-      )}
-
-      <div className="mx-auto mt-8 flex w-full flex-wrap items-center justify-center gap-3">
+      <div className="mx-auto mt-7 flex w-full flex-col items-center gap-3 px-4">
         <button
           type="button"
           onClick={() => scrollToId('characters')}
-          className="bg-pink-950 hover:bg-pink-900 text-white px-6 py-3 rounded-full font-medium transition inline-flex items-center gap-2"
+          className="inline-flex items-center gap-2 rounded-full bg-pink-950 px-7 py-3.5 text-base font-medium text-white transition hover:bg-pink-900"
         >
           <Search className="h-4 w-4" />
-          Find characters
+          Pick a book
         </button>
-        <button
-          type="button"
-          onClick={() => scrollToId('custom')}
-          className="flex items-center gap-2 border border-pink-200 bg-white/60 hover:bg-pink-50 rounded-full px-6 py-3 text-pink-950"
-        >
-          <PenLine className="h-4 w-4" />
-          Create your own character
-        </button>
+        <p className="text-center text-xs text-pink-950/65">
+          {usageRemaining === 0 ? (
+            <span className="font-medium text-red-700">Daily limit reached. Try again tomorrow.</span>
+          ) : (
+            <>Free · {usageLimit} portraits a day · no signup</>
+          )}
+          <span className="mx-1.5 hidden text-pink-300 sm:inline">·</span>
+          <button
+            type="button"
+            onClick={() => scrollToId('custom')}
+            className="mx-auto mt-1 block font-medium text-pink-900 underline underline-offset-2 hover:text-pink-700 sm:mt-0 sm:inline"
+          >
+            or describe your own character
+          </button>
+        </p>
       </div>
+
+      <HeroShowcase onPick={() => scrollToId('characters')} />
 
       <div className="h-24 md:h-28" />
 
@@ -1144,6 +1131,11 @@ export default function HeroSection() {
                             imageUrl={bookCharImageUrl}
                             altText={`Portrait of ${selectedCharName}`}
                             filename={`${selectedCharName.replace(/\s+/g, '-').toLowerCase()}-portrait.jpg`}
+                            shareText={{
+                              name: selectedCharName,
+                              book: books.find((b) => b.book_id === selectedBookId)?.title,
+                              quote: selectedCastMember?.appearance_quotes?.[0]?.quote,
+                            }}
                             onRegenerate={() => generateBookCharacter(true)}
                             regenerating={bookCharGenerating || bookSceneBusy}
                             onSceneVariant={generateBookSceneVariant}
@@ -1327,6 +1319,7 @@ export default function HeroSection() {
                     imageUrl={customImageUrl}
                     altText="Generated portrait"
                     filename={`${(customName || 'portrait').replace(/\s+/g, '-').toLowerCase()}-portrait.jpg`}
+                    shareText={{ name: customName.trim() || 'Original character' }}
                     onRegenerate={() => generateCustomCharacter(true)}
                     regenerating={customGenerating || customSceneBusy}
                     onSceneVariant={generateCustomSceneVariant}
