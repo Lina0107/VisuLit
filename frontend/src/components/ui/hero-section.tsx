@@ -102,6 +102,15 @@ async function downloadWithWatermark(imgSrc: string, filename: string) {
   });
 }
 
+// Books shown as tiles above the search: the ones we have a finished portrait for.
+const FEATURED_BOOKS = [
+  { bookId: 'gutenberg-1342', title: 'Pride and Prejudice', author: 'Jane Austen', imageSrc: '/gallery/02.jpg' },
+  { bookId: 'gutenberg-1260', title: 'Jane Eyre', author: 'Charlotte Brontë', imageSrc: '/gallery/04.jpg' },
+  { bookId: 'gutenberg-345', title: 'Dracula', author: 'Bram Stoker', imageSrc: '/gallery/05.jpg' },
+  { bookId: 'gutenberg-174', title: 'The Picture of Dorian Gray', author: 'Oscar Wilde', imageSrc: '/gallery/06.jpg' },
+  { bookId: 'gutenberg-37106', title: 'Little Women', author: 'Louisa May Alcott', imageSrc: '/gallery/07.jpg' },
+];
+
 type SceneVariantPayload = { emotion: string; pose: string; setting: string; notes: string };
 
 // Small reusable component: image card with watermark download/regenerate button
@@ -138,64 +147,10 @@ function PortraitCard({
   );
 
   return (
-    <div className="mt-3 rounded-2xl border border-pink-200 bg-white/60 p-3">
-      <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="text-xs font-semibold text-pink-900/70 uppercase tracking-wider">Generated portrait</div>
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          {onRegenerate && (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => onRegenerate()}
-              className="inline-flex items-center gap-1.5 bg-white hover:bg-pink-50 disabled:opacity-50 text-pink-950 text-xs px-4 py-2 rounded-full font-medium transition ring-1 ring-pink-200"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              {regenerating ? 'Regenerating…' : 'Regenerate'}
-            </button>
-          )}
-          <button
-            type="button"
-            disabled={downloading || regenerating}
-            onClick={async () => {
-              setDownloading(true);
-              try {
-                await downloadWithWatermark(imageUrl, filename);
-              } catch (e) {
-                console.error('Download failed', e);
-              } finally {
-                setDownloading(false);
-              }
-            }}
-            className="inline-flex items-center gap-1.5 bg-pink-950 hover:bg-pink-900 disabled:opacity-50 text-white text-xs px-4 py-2 rounded-full font-medium transition"
-          >
-            <Download className="h-3.5 w-3.5" />
-            {downloading ? 'Saving…' : 'Download'}
-          </button>
-          {shareText && (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={async () => {
-                setDownloading(true);
-                try {
-                  await downloadShareCard(imageUrl, shareText, filename.replace(/\.jpg$/, '-card.jpg'));
-                } catch (e) {
-                  console.error('Share card failed', e);
-                } finally {
-                  setDownloading(false);
-                }
-              }}
-              className="inline-flex items-center gap-1.5 bg-white hover:bg-pink-50 disabled:opacity-50 text-pink-950 text-xs px-4 py-2 rounded-full font-medium transition ring-1 ring-pink-200"
-            >
-              <ImageDown className="h-3.5 w-3.5" />
-              Share card
-            </button>
-          )}
-        </div>
-      </div>
+    <div className="mt-4">
       <div className="relative">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={imageUrl} alt={altText} className="w-full rounded-xl object-cover" />
+        <img src={imageUrl} alt={altText} className="w-full rounded-2xl object-cover" />
         {sceneVariantBusy && (
           <div
             className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl bg-pink-950/45 px-4 text-center text-white backdrop-blur-[1px]"
@@ -206,6 +161,58 @@ function PortraitCard({
             <p className="text-sm font-medium">Generating new scene…</p>
             <p className="text-[11px] text-white/80">Adjusting pose, mood, and setting</p>
           </div>
+        )}
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          disabled={downloading || regenerating}
+          onClick={async () => {
+            setDownloading(true);
+            try {
+              await downloadWithWatermark(imageUrl, filename);
+            } catch (e) {
+              console.error('Download failed', e);
+            } finally {
+              setDownloading(false);
+            }
+          }}
+          className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-full bg-pink-950 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-pink-900 disabled:opacity-50"
+        >
+          <Download className="h-4 w-4" />
+          {downloading ? 'Saving…' : 'Download'}
+        </button>
+        {shareText && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={async () => {
+              setDownloading(true);
+              try {
+                await downloadShareCard(imageUrl, shareText, filename.replace(/\.jpg$/, '-card.jpg'));
+              } catch (e) {
+                console.error('Share card failed', e);
+              } finally {
+                setDownloading(false);
+              }
+            }}
+            className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-medium text-pink-950 ring-1 ring-pink-300 transition hover:bg-pink-50 disabled:opacity-50"
+          >
+            <ImageDown className="h-4 w-4" />
+            Share card
+          </button>
+        )}
+        {onRegenerate && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onRegenerate()}
+            className="inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium text-pink-900 transition hover:bg-pink-50 disabled:opacity-50"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            {regenerating ? 'Regenerating…' : 'Try another version'}
+          </button>
         )}
       </div>
 
@@ -507,7 +514,8 @@ export default function HeroSection() {
   React.useEffect(() => {
     try {
       const seen = window.localStorage.getItem('visulit_walkthrough_seen');
-      if (!seen) setShowWalkthrough(true);
+      // The first screen now explains the product itself; a popup over it only hides the portraits.
+      void seen;
     } catch {}
   }, []);
 
@@ -561,6 +569,15 @@ export default function HeroSection() {
   const appearanceQuoteCount = selectedCastMember?.appearance_quotes?.length ?? 0;
 
   const filteredBooks = books;
+
+  function pickBook(bookId: string) {
+    setSelectedBookId(bookId);
+    setMissingStatus('');
+    setSelectedCharId('');
+    setSelectedCharName('');
+    setBookCharImageUrl('');
+    setBookCharError('');
+  }
   const filteredHistory = historyFilter === 'all'
     ? historyItems
     : historyItems.filter((h) => (h.source_type || '').toLowerCase() === historyFilter);
@@ -896,32 +913,46 @@ export default function HeroSection() {
       {/* BOOK PICKER */}
       <div id="characters" className="mx-auto w-full max-w-5xl scroll-mt-24 px-4 md:px-16 lg:px-24 xl:px-32 pb-16">
         <div className="rounded-3xl border border-pink-200 bg-white/70 p-6 md:p-10 shadow-[0_18px_50px_rgba(120,60,90,0.10)]">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 ring-1 ring-pink-200 text-pink-950 w-max">
-            <Search className="h-4 w-4 text-pink-700" />
-            <span className="font-semibold">Find characters</span>
-          </div>
+          <h2 className="font-serif text-3xl font-semibold text-pink-950 md:text-4xl">Pick a book</h2>
+          <p className="mt-2 max-w-2xl text-pink-950/70">
+            We read it, find the characters and the lines that describe them, and paint from those lines.
+          </p>
 
-          <h2 className="mt-4 text-2xl md:text-3xl font-semibold text-pink-950">
-            Start with one book, let {BRAND_NAME} prepare the cast
-          </h2>
-          <p className="mt-3 max-w-2xl text-pink-950/70">
-            Search by title, pick from our curated list, then prepare the book. If a character is missing, type the name and we'll add
-            them by searching the book text.
-          </p>
-          <p className="mt-2 text-xs text-pink-900/65">
-            40+ curated picks · Extended catalog matches when your title isn&apos;t on the shortlist · Quote-grounded portraits
-          </p>
+          <ul className="-mx-6 mt-5 flex snap-x scroll-px-6 gap-3 overflow-x-auto px-6 pb-2 pt-1 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-5 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 [&::-webkit-scrollbar]:hidden">
+            {FEATURED_BOOKS.map((fb) => {
+              const active = selectedBookId === fb.bookId;
+              return (
+                <li key={fb.bookId} className="w-[38vw] max-w-[170px] shrink-0 snap-start sm:w-auto sm:max-w-none">
+                  <button
+                    type="button"
+                    onClick={() => pickBook(fb.bookId)}
+                    aria-pressed={active}
+                    className={`group relative block aspect-[4/5] w-full overflow-hidden rounded-2xl bg-pink-100 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-500 ${
+                      active ? 'ring-[3px] ring-pink-900' : 'ring-1 ring-pink-200 hover:ring-pink-400'
+                    }`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={fb.imageSrc} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
+                    <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#2a0b1c]/95 via-[#2a0b1c]/60 to-transparent px-3 pb-3 pt-10">
+                      <span className="block font-serif text-sm font-semibold leading-tight text-white">{fb.title}</span>
+                      <span className="block text-[11px] text-pink-100/75">{fb.author}</span>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
 
           <div className="mt-8 grid gap-6 lg:grid-cols-2">
             {/* LEFT: book search + cast */}
             <div>
-              <div className="text-xs font-semibold text-pink-900/70 uppercase tracking-wider">Book search</div>
+              <div className="text-xs font-semibold text-pink-900/70 uppercase tracking-wider">Or search 40+ classics</div>
               <div className="mt-2 flex items-center gap-2 rounded-2xl border border-pink-200 bg-white/70 px-4 py-3">
                 <Search className="h-4 w-4 text-pink-700" />
                 <input
                   value={bookQuery}
                   onChange={(e) => setBookQuery(e.target.value)}
-                  placeholder="Search curated titles — full catalog expands matches…"
+                  placeholder="Title or author"
                   className="w-full bg-transparent text-sm text-pink-950 placeholder:text-pink-950/40 outline-none"
                 />
               </div>
@@ -937,14 +968,7 @@ export default function HeroSection() {
                   <button
                     key={b.book_id}
                     type="button"
-                    onClick={() => {
-                      setSelectedBookId(b.book_id);
-                      setMissingStatus('');
-                      setSelectedCharId('');
-                      setSelectedCharName('');
-                      setBookCharImageUrl('');
-                      setBookCharError('');
-                    }}
+                    onClick={() => pickBook(b.book_id)}
                     className={[
                       'w-full text-left px-4 py-3 border-b border-pink-100 hover:bg-pink-50 transition',
                       selectedBookId === b.book_id ? 'bg-pink-50 font-semibold' : '',
@@ -1039,8 +1063,12 @@ export default function HeroSection() {
                 )
               )}
 
+            </div>
+
+            {/* RIGHT: cast, portrait, missing character */}
+            <div>
               {/* CAST + GENERATE */}
-              <div className="mt-5 rounded-2xl border border-pink-200 bg-white/60 p-4">
+              <div className="rounded-2xl border border-pink-200 bg-white/60 p-4">
                 <div className="text-xs font-semibold text-pink-900/70 uppercase tracking-wider">Cast</div>
                 {castLoading ? (
                   <div className="mt-2 text-sm text-pink-950/60">Loading characters…</div>
@@ -1158,11 +1186,7 @@ export default function HeroSection() {
                   </div>
                 )}
               </div>
-            </div>
-
-            {/* RIGHT: missing character */}
-            <div>
-              <div className="text-xs font-semibold text-pink-900/70 uppercase tracking-wider">
+              <div className="mt-6 text-xs font-semibold text-pink-900/70 uppercase tracking-wider">
                 Missing a character?
               </div>
               <div className="mt-2 rounded-2xl border border-pink-200 bg-white/70 p-4">
@@ -1232,10 +1256,10 @@ export default function HeroSection() {
           </div>
           <div className="mt-4 grid gap-8 lg:grid-cols-2 lg:items-start">
             <div>
-              <h2 className="text-2xl md:text-3xl font-semibold text-pink-950">Create a branded {BRAND_NAME} prompt in 30 seconds</h2>
+              <h2 className="font-serif text-3xl md:text-4xl font-semibold text-pink-950">Describe your own character</h2>
               <p className="mt-3 text-pink-950/70 max-w-xl">
-                Use a guided form (hair, eyes, era, clothing) to generate a clean prompt in the {BRAND_NAME} style. Your prompt stays on
-                this page for easy reuse and fast iteration.
+                Writing your own story, or the book isn&apos;t in the catalog? Fill in hair, eyes, era and clothing, and get a
+                portrait in the same style.
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <button
@@ -1350,7 +1374,7 @@ export default function HeroSection() {
       <div className="mx-auto w-full max-w-6xl px-4 md:px-16 lg:px-24 xl:px-32 pb-20">
         <div className="rounded-3xl border border-pink-200 bg-white/70 p-6 md:p-10 shadow-[0_18px_50px_rgba(120,60,90,0.10)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-2xl md:text-3xl font-semibold text-pink-950">History</h2>
+            <h2 className="font-serif text-3xl md:text-4xl font-semibold text-pink-950">Your portraits</h2>
             <div className="flex items-center gap-2">
               {(['all', 'book', 'custom'] as const).map((f) => (
                 <button
@@ -1418,7 +1442,7 @@ export default function HeroSection() {
       <div className="mx-auto w-full max-w-6xl px-4 md:px-16 lg:px-24 xl:px-32 pb-20">
         <div className="mx-auto max-w-3xl rounded-3xl border border-pink-200 bg-white/70 p-6 md:p-8 shadow-[0_18px_50px_rgba(120,60,90,0.10)]">
           <div className="flex flex-wrap items-end justify-between gap-3">
-            <h3 className="text-xl md:text-2xl font-semibold text-pink-950">FAQ</h3>
+            <h3 className="font-serif text-2xl md:text-3xl font-semibold text-pink-950">Questions</h3>
             <button
               type="button"
               onClick={() => scrollToId('gallery')}

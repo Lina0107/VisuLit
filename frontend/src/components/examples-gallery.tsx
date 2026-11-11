@@ -86,7 +86,7 @@ export function ExamplesGallery() {
       aria-labelledby="gallery-heading"
     >
       <div className="rounded-3xl border border-pink-200 bg-white/70 p-6 md:p-10 shadow-[0_18px_50px_rgba(120,60,90,0.10)]">
-        <h2 id="gallery-heading" className="text-2xl font-semibold text-pink-950 md:text-3xl">
+        <h2 id="gallery-heading" className="font-serif text-3xl font-semibold text-pink-950 md:text-4xl">
           Portrait gallery
         </h2>
         <p className="mt-2 max-w-2xl text-sm text-pink-950/75">
