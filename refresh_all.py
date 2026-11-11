@@ -44,6 +44,7 @@ def main() -> int:
             r = session.post(
                 f"{api_base}/api/prepare_book",
                 json={"book_id": book_id, "overwrite": True, "main_limit": main_limit},
+                headers={"X-Admin-Token": os.getenv("ADMIN_TOKEN", "")},
                 timeout=600,
             )
             data = r.json()

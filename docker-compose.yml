@@ -8,6 +8,9 @@ services:
       - AITUNNEL_API_KEY=${AITUNNEL_API_KEY}
       - AITUNNEL_BASE_URL=${AITUNNEL_BASE_URL}
       - AITUNNEL_MODEL=${AITUNNEL_MODEL}
+      - ADMIN_TOKEN=${ADMIN_TOKEN:-}
+      - IP_DAILY_LIMIT=${IP_DAILY_LIMIT:-15}
+      - GLOBAL_DAILY_LIMIT=${GLOBAL_DAILY_LIMIT:-200}
       # Optional image model/size overrides
       - IMAGE_MODEL=${IMAGE_MODEL:-gemini-3-pro-image-preview}
       - IMAGE_SIZE=${IMAGE_SIZE:-1024x1536}

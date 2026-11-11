@@ -4,6 +4,7 @@ from flask_cors import CORS
 import json
 import os
 import hashlib
+import hmac
 import base64
 from datetime import datetime, timezone
 import requests
@@ -34,6 +35,11 @@ HISTORY_FILE = os.path.join(DATA_DIR, "history.json")
 PORTRAITS_DIR = os.path.join(DATA_DIR, "portraits")
 
 DAILY_FREE_LIMIT = 5
+# Guards on top of the per-visitor limit (see check_and_update_usage).
+IP_DAILY_LIMIT = int(os.getenv("IP_DAILY_LIMIT", "15"))
+GLOBAL_DAILY_LIMIT = int(os.getenv("GLOBAL_DAILY_LIMIT", "200"))
+# Secret for maintenance routes; when empty those routes are closed.
+ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "").strip()
 
 AITUNNEL_API_KEY = os.getenv("AITUNNEL_API_KEY", "").strip()
 AITUNNEL_BASE_URL = os.getenv("AITUNNEL_BASE_URL", "https://api.aitunnel.ru/v1").strip()
@@ -116,12 +122,43 @@ init_files()
 
 
 # -------------------- usage / cookies --------------------
+_USER_ID_RE = re.compile(r"^[A-Za-z0-9-]{16,64}$")
+
+
 def get_user_id(req):
-    uid = req.cookies.get("user_id")
-    if uid:
+    """Visitor id for history and the per-visitor daily limit.
+
+    A returning visitor is identified by the `user_id` cookie. A new visitor gets
+    a random id (never one derived from the IP: behind the reverse proxy every
+    visitor can share one address, which made them share one daily limit).
+    """
+    uid = (req.cookies.get("user_id") or "").strip()
+    # Ids issued before this fix were the md5 of the peer address; drop those so
+    # visitors who were handed the same shared id get their own.
+    legacy = hashlib.md5((req.remote_addr or "unknown").encode("utf-8")).hexdigest()
+    if uid and uid != legacy and _USER_ID_RE.match(uid):
         return uid
-    ip = req.remote_addr or "unknown"
-    return hashlib.md5(ip.encode("utf-8")).hexdigest()
+    cached = getattr(req, "_visulit_uid", None)
+    if not cached:
+        cached = uuid.uuid4().hex
+        req._visulit_uid = cached
+    return cached
+
+
+def get_client_ip(req):
+    """Real client address: first hop of X-Forwarded-For (set by Caddy), else the peer."""
+    fwd = (req.headers.get("X-Forwarded-For") or "").split(",")[0].strip()
+    return fwd or req.remote_addr or "unknown"
+
+
+def require_admin(req):
+    """Maintenance routes cost money or rewrite shared data: allow them only with ADMIN_TOKEN."""
+    token = (req.headers.get("X-Admin-Token") or "").strip()
+    return bool(ADMIN_TOKEN) and len(token) == len(ADMIN_TOKEN) and hmac.compare_digest(token, ADMIN_TOKEN)
+
+
+def admin_denied():
+    return jsonify({"success": False, "error": "Admin token required"}), 403
 
 
 def today_key():
@@ -134,13 +171,23 @@ def check_and_update_usage(user_id):
 
     if t not in usage:
         usage[t] = {}
+    day = usage[t]
 
-    used = int(usage[t].get(user_id, 0))
-    if used >= DAILY_FREE_LIMIT:
+    # Clearing the cookie must not reset the limit, and one visitor must not be
+    # able to spend the whole image budget: cap per address and per day overall.
+    ip_key = "ip:" + hashlib.md5(get_client_ip(request).encode("utf-8")).hexdigest()
+    used = int(day.get(user_id, 0))
+    if (
+        used >= DAILY_FREE_LIMIT
+        or int(day.get(ip_key, 0)) >= IP_DAILY_LIMIT
+        or int(day.get("__total__", 0)) >= GLOBAL_DAILY_LIMIT
+    ):
         return False, 0
 
     used += 1
-    usage[t][user_id] = used
+    day[user_id] = used
+    day[ip_key] = int(day.get(ip_key, 0)) + 1
+    day["__total__"] = int(day.get("__total__", 0)) + 1
     save_json(USAGE_FILE, usage)
 
     return True, max(0, DAILY_FREE_LIMIT - used)
@@ -2338,8 +2385,8 @@ def api_usage():
         "daily_limit": DAILY_FREE_LIMIT
     }))
 
-    if not request.cookies.get("user_id"):
-        resp.set_cookie("user_id", user_id, max_age=365*24*60*60)
+    if request.cookies.get("user_id") != user_id:
+        resp.set_cookie("user_id", user_id, max_age=365 * 24 * 60 * 60, httponly=True, samesite="Lax")
 
     return resp
 
@@ -2470,6 +2517,10 @@ def api_prepare_book():
     book_id = data.get("book_id")
     overwrite = bool(data.get("overwrite", False))
     main_limit = int(data.get("main_limit", 12))
+    # Re-preparing an already prepared book costs GPT calls and replaces the
+    # shared cast, so visitors can only prepare, not overwrite.
+    if overwrite and not require_admin(request):
+        return admin_denied()
 
     if not book_id:
         return jsonify({"success": False, "error": "book_id required"}), 400
@@ -2656,6 +2707,8 @@ def api_sanitize_appearance_quotes():
     Re-filter appearance_quotes already stored in characters.json (no book re-download).
     Heuristic pass always; optional GPT audit pass when use_gpt=true and API key is set.
     """
+    if not require_admin(request):
+        return admin_denied()
     data = request.get_json(silent=True) or {}
     book_id = (data.get("book_id") or "").strip()
     use_gpt = bool(data.get("use_gpt", False))
@@ -2739,6 +2792,8 @@ def api_reselect_appearance_quotes():
     Re-run appearance-quote selection from book text.
     Default: heuristic + GPT selection + GPT audit (use_gpt=false for heuristics only).
     """
+    if not require_admin(request):
+        return admin_denied()
     data = request.get_json(silent=True) or {}
     book_id = (data.get("book_id") or "").strip()
     max_per_char = int(data.get("max_per_char") or 28)
@@ -3046,8 +3101,8 @@ def _api_generate_scene_variant(data: dict):
                                 "cached": True,
                                 "scene_variant": True,
                             }))
-                            if not request.cookies.get("user_id"):
-                                resp.set_cookie("user_id", user_id, max_age=365 * 24 * 60 * 60)
+                            if request.cookies.get("user_id") != user_id:
+                                resp.set_cookie("user_id", user_id, max_age=365 * 24 * 60 * 60, httponly=True, samesite="Lax")
                             return resp
         except Exception:
             pass
@@ -3085,8 +3140,8 @@ def _api_generate_scene_variant(data: dict):
         "scene_variant": True,
     }))
 
-    if not request.cookies.get("user_id"):
-        resp.set_cookie("user_id", user_id, max_age=365 * 24 * 60 * 60)
+    if request.cookies.get("user_id") != user_id:
+        resp.set_cookie("user_id", user_id, max_age=365 * 24 * 60 * 60, httponly=True, samesite="Lax")
 
     return resp
 
@@ -3100,6 +3155,8 @@ def api_reset_canonical_portrait():
       {"book_id": "..."}       — reset every character of a book
       {"all": true}            — reset every canonical portrait (e.g. after a prompt fix)
     """
+    if not require_admin(request):
+        return admin_denied()
     data = request.get_json(silent=True) or {}
     character_id = (data.get("character_id") or "").strip()
     book_id = (data.get("book_id") or "").strip()
@@ -3177,8 +3234,8 @@ def api_generate():
                 "cached": True,
                 "canonical": True,
             }))
-            if not request.cookies.get("user_id"):
-                resp.set_cookie("user_id", user_id, max_age=365 * 24 * 60 * 60)
+            if request.cookies.get("user_id") != user_id:
+                resp.set_cookie("user_id", user_id, max_age=365 * 24 * 60 * 60, httponly=True, samesite="Lax")
             return resp
 
     # Per-user history cache (same browser, same prompt).
@@ -3208,8 +3265,8 @@ def api_generate():
                                 "remaining_free_count": remaining,
                                 "cached": True,
                             }))
-                            if not request.cookies.get("user_id"):
-                                resp.set_cookie("user_id", user_id, max_age=365 * 24 * 60 * 60)
+                            if request.cookies.get("user_id") != user_id:
+                                resp.set_cookie("user_id", user_id, max_age=365 * 24 * 60 * 60, httponly=True, samesite="Lax")
                             return resp
                     rec_desc = (rec.get("description") or "").strip()
                     if rec_desc and hashlib.md5(rec_desc.encode("utf-8")).hexdigest() == prompt_hash:
@@ -3222,8 +3279,8 @@ def api_generate():
                                 "remaining_free_count": remaining,
                                 "cached": True,
                             }))
-                            if not request.cookies.get("user_id"):
-                                resp.set_cookie("user_id", user_id, max_age=365 * 24 * 60 * 60)
+                            if request.cookies.get("user_id") != user_id:
+                                resp.set_cookie("user_id", user_id, max_age=365 * 24 * 60 * 60, httponly=True, samesite="Lax")
                             return resp
         except Exception:
             # Cache failure should not break generation flow.
@@ -3269,8 +3326,8 @@ def api_generate():
 
     resp = make_response(jsonify(payload))
 
-    if not request.cookies.get("user_id"):
-        resp.set_cookie("user_id", user_id, max_age=365*24*60*60)
+    if request.cookies.get("user_id") != user_id:
+        resp.set_cookie("user_id", user_id, max_age=365 * 24 * 60 * 60, httponly=True, samesite="Lax")
 
     return resp
 

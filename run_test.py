@@ -1,3 +1,4 @@
+import os
 import sys, requests, json
 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
@@ -13,6 +14,7 @@ for bid, title in books:
         r = requests.post(
             "http://localhost:5000/api/prepare_book",
             json={"book_id": bid, "overwrite": True, "main_limit": 8},
+            headers={"X-Admin-Token": os.getenv("ADMIN_TOKEN", "")},
             timeout=300
         )
         d = r.json()
